@@ -58,16 +58,23 @@ if %ERRORLEVEL% EQU 0 (
     echo 3. Follow VERCEL_SETUP_GUIDE.md to redeploy
 ) else (
     echo ========================================
-    echo ERROR: Push failed
+    echo ERROR: Authentication Failed!
     echo ========================================
     echo.
-    echo This might be because:
-    echo 1. You need to authenticate with GitHub
-    echo 2. The repository doesn't exist
-    echo 3. You don't have force push permissions
+    echo GitHub больше не поддерживает пароли для Git!
+    echo Нужен Personal Access Token.
     echo.
-    echo Try using GitHub Desktop instead:
-    echo https://desktop.github.com/
+    echo РЕШЕНИЕ 1 (ПРОЩЕ): Используйте GitHub Desktop
+    echo   1. Скачайте: https://desktop.github.com/
+    echo   2. Войдите в аккаунт
+    echo   3. Откройте эту папку в GitHub Desktop
+    echo   4. Нажмите Push
+    echo.
+    echo РЕШЕНИЕ 2: Настройте токен
+    echo   Откройте файл GITHUB_TOKEN_SETUP.md
+    echo   Следуйте инструкциям для создания токена
+    echo.
+    echo После настройки запустите этот скрипт снова!
 )
 echo.
 pause
