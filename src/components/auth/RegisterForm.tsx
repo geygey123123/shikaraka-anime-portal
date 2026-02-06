@@ -12,6 +12,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ 
     email?: string; 
     password?: string; 
@@ -19,6 +20,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
     general?: string;
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSubmitTime, setLastSubmitTime] = useState<number>(0);
 
   const validateEmail = (email: string): string | null => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -54,6 +56,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Защита от множественных попыток (минимум 3 секунды между попытками)
+    const now = Date.now();
+    if (now - lastSubmitTime < 3000) {
+      setErrors({ general: 'Пожалуйста, подождите несколько секунд перед повторной попыткой' });
+      return;
+    }
+    
     // Валидация
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
@@ -70,11 +79,17 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
 
     // Очистить ошибки
     setErrors({});
+    setSuccessMessage(null);
     setIsSubmitting(true);
+    setLastSubmitTime(now);
 
     try {
       await register(email, password);
-      onSuccess?.();
+      setSuccessMessage('Регистрация успешна! Вы можете войти в систему.');
+      // Даем пользователю время прочитать сообщение перед закрытием
+      setTimeout(() => {
+        onSuccess?.();
+      }, 1500);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Ошибка регистрации';
       
@@ -86,6 +101,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
         displayError = 'Пользователь с таким email уже существует';
       } else if (errorMessage.includes('Password should be at least')) {
         displayError = 'Пароль должен содержать минимум 6 символов';
+      } else if (errorMessage.includes('Проверьте вашу почту')) {
+        displayError = 'Регистрация успешна! Проверьте вашу почту для подтверждения аккаунта.';
+        setSuccessMessage(displayError);
+        setTimeout(() => {
+          onSuccess?.();
+        }, 3000);
+        return;
+      } else if (errorMessage.includes('rate limit')) {
+        displayError = 'Слишком много попыток. Пожалуйста, подождите несколько минут и попробуйте снова.';
       }
       
       setErrors({ general: displayError });
@@ -174,6 +198,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
           <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
         )}
       </div>
+
+      {/* Сообщение об успехе */}
+      {successMessage && (
+        <div className="p-3 bg-green-500/10 border border-green-500 rounded-lg">
+          <p className="text-sm text-green-500">{successMessage}</p>
+        </div>
+      )}
 
       {/* Общая ошибка */}
       {errors.general && (

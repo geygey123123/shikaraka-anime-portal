@@ -1,0 +1,10 @@
+<svg width="300" height="450" viewBox="0 0 300 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="450" fill="#0a0a0c"/>
+  <rect x="75" y="150" width="150" height="150" rx="75" fill="#1a1a1c"/>
+  <path d="M150 180L165 210H135L150 180Z" fill="#ff0055"/>
+  <circle cx="135" cy="240" r="8" fill="#ff0055"/>
+  <circle cx="165" cy="240" r="8" fill="#ff0055"/>
+  <path d="M130 270Q150 285 170 270" stroke="#ff0055" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <text x="150" y="350" font-family="Arial, sans-serif" font-size="16" fill="#666" text-anchor="middle">Изображение</text>
+  <text x="150" y="370" font-family="Arial, sans-serif" font-size="16" fill="#666" text-anchor="middle">недоступно</text>
+</svg>

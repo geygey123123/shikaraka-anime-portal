@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Menu, X, User, LogOut, Heart } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useAuthModal } from '../../contexts/AuthModalContext';
 import { Button } from '../ui/Button';
 
 interface HeaderProps {
@@ -10,6 +11,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
   const { user, isAuthenticated, logout } = useAuth();
+  const { openAuthModal } = useAuthModal();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -36,11 +38,10 @@ export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
     }
   }, [logout, navigate]);
 
-  const handleAuthClick = useCallback(() => {
+  const handleAuthClick = useCallback((mode: 'login' | 'register' = 'login') => {
     setIsMobileMenuOpen(false);
-    // This will be connected to AuthModal in future tasks
-    console.log('Open auth modal');
-  }, []);
+    openAuthModal(mode);
+  }, [openAuthModal]);
 
   return (
     <header className="sticky top-0 z-50 bg-[#0a0a0c] border-b border-gray-800">
@@ -107,10 +108,10 @@ export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
               </>
             ) : (
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={handleAuthClick}>
+                <Button variant="ghost" size="sm" onClick={() => handleAuthClick('login')}>
                   Войти
                 </Button>
-                <Button variant="primary" size="sm" onClick={handleAuthClick}>
+                <Button variant="primary" size="sm" onClick={() => handleAuthClick('register')}>
                   Регистрация
                 </Button>
               </div>
@@ -177,7 +178,7 @@ export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
                 <Button
                   variant="ghost"
                   size="md"
-                  onClick={handleAuthClick}
+                  onClick={() => handleAuthClick('login')}
                   className="w-full"
                 >
                   Войти
@@ -185,7 +186,7 @@ export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
                 <Button
                   variant="primary"
                   size="md"
-                  onClick={handleAuthClick}
+                  onClick={() => handleAuthClick('register')}
                   className="w-full"
                 >
                   Регистрация

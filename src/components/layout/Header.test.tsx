@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { Header } from './Header';
+import { AuthModalProvider } from '../../contexts/AuthModalContext';
 import * as authHook from '../../hooks/useAuth';
 
 // Mock useAuth hook
@@ -10,7 +11,9 @@ vi.mock('../../hooks/useAuth');
 const renderHeader = (props = {}) => {
   return render(
     <BrowserRouter>
-      <Header {...props} />
+      <AuthModalProvider>
+        <Header {...props} />
+      </AuthModalProvider>
     </BrowserRouter>
   );
 };

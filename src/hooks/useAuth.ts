@@ -103,10 +103,19 @@ export const useAuth = () => {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          // Отключаем подтверждение email для упрощения процесса
+          emailRedirectTo: window.location.origin,
+        }
       });
 
       if (signUpError) {
         throw signUpError;
+      }
+
+      // Проверяем, требуется ли подтверждение email
+      if (data.user && !data.session) {
+        throw new Error('Проверьте вашу почту для подтверждения регистрации');
       }
 
       if (data.user) {

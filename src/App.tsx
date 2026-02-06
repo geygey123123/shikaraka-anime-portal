@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { LoadingScreen } from './components/ui/LoadingScreen'
+import { AuthModalProvider, useAuthModal } from './contexts/AuthModalContext'
+import { AuthModal } from './components/auth/AuthModal'
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })))
@@ -32,20 +34,44 @@ const queryClient = new QueryClient({
   },
 })
 
+function AppContent() {
+  const { isAuthModalOpen, authModalMode, closeAuthModal } = useAuthModal();
+
+  return (
+    <>
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/anime/:id" element={<AnimeDetail />} />
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+      
+      {/* Global AuthModal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        initialMode={authModalMode}
+      />
+    </>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Suspense fallback={<LoadingScreen />}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/anime/:id" element={<AnimeDetail />} />
-              <Route path="/favorites" element={<Favorites />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
+        <AuthModalProvider>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <AppContent />
+          </BrowserRouter>
+        </AuthModalProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   )

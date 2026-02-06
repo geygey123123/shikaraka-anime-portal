@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Anime } from '../../types/anime';
 import { shikimoriService } from '../../services/shikimori';
@@ -10,6 +10,17 @@ interface AnimeCardProps {
 
 const AnimeCardComponent: React.FC<AnimeCardProps> = ({ anime, onClick }) => {
   const queryClient = useQueryClient();
+  const [imageError, setImageError] = useState(false);
+  
+  // Добавляем базовый URL для изображений Shikimori
+  const getImageUrl = (url: string) => {
+    if (!url) return '/anime-placeholder.svg';
+    if (url.startsWith('http')) return url;
+    return `https://shikimori.one${url}`;
+  };
+  
+  const [imageUrl, setImageUrl] = useState(getImageUrl(anime.image.preview));
+  
   const displayName = anime.russian || anime.name;
   const year = anime.aired_on ? new Date(anime.aired_on).getFullYear() : 'N/A';
   
@@ -20,6 +31,19 @@ const AnimeCardComponent: React.FC<AnimeCardProps> = ({ anime, onClick }) => {
       queryFn: () => shikimoriService.getAnimeById(anime.id),
       staleTime: 10 * 60 * 1000, // 10 minutes
     });
+  };
+  
+  // Handle image loading errors with fallback strategy
+  const handleImageError = () => {
+    if (!imageError) {
+      // First try: attempt to use original image URL
+      if (imageUrl === getImageUrl(anime.image.preview) && anime.image.original) {
+        setImageUrl(getImageUrl(anime.image.original));
+      } else {
+        // Final fallback: use placeholder
+        setImageError(true);
+      }
+    }
   };
   
   return (
@@ -37,12 +61,13 @@ const AnimeCardComponent: React.FC<AnimeCardProps> = ({ anime, onClick }) => {
       }}
     >
       {/* Poster with lazy loading */}
-      <div className="relative w-full aspect-[2/3] overflow-hidden">
+      <div className="relative w-full aspect-[2/3] overflow-hidden bg-gray-900">
         <img
-          src={anime.image.preview}
+          src={imageError ? '/anime-placeholder.svg' : imageUrl}
           alt={displayName}
           loading="lazy"
           className="w-full h-full object-cover"
+          onError={handleImageError}
         />
         
         {/* Gradient overlay */}

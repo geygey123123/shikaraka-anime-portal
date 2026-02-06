@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Film, Star, TrendingUp } from 'lucide-react';
 import { useAnimeDetails } from '../hooks/useAnime';
@@ -10,8 +10,38 @@ export const AnimeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const animeId = parseInt(id || '0', 10);
+  const [imageError, setImageError] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>('');
   
   const { data: anime, isLoading, error, refetch } = useAnimeDetails(animeId);
+
+  // Добавляем базовый URL для изображений Shikimori
+  const getImageUrl = (url: string) => {
+    if (!url) return '/anime-placeholder.svg';
+    if (url.startsWith('http')) return url;
+    return `https://shikimori.one${url}`;
+  };
+
+  // Initialize image URL when anime data is loaded
+  React.useEffect(() => {
+    if (anime?.image?.original) {
+      setImageUrl(getImageUrl(anime.image.original));
+      setImageError(false);
+    }
+  }, [anime]);
+
+  // Handle image loading errors with fallback strategy
+  const handleImageError = () => {
+    if (!imageError && anime) {
+      // First try: attempt to use preview image URL
+      if (imageUrl === getImageUrl(anime.image.original) && anime.image.preview) {
+        setImageUrl(getImageUrl(anime.image.preview));
+      } else {
+        // Final fallback: use placeholder
+        setImageError(true);
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -68,9 +98,10 @@ export const AnimeDetail: React.FC = () => {
             <div className="lg:col-span-1">
               <div className="sticky top-8">
                 <img
-                  src={anime.image.original}
+                  src={imageError ? '/anime-placeholder.svg' : imageUrl}
                   alt={displayName}
                   className="w-full rounded-lg shadow-2xl"
+                  onError={handleImageError}
                 />
                 
                 {/* Favorite Button */}
