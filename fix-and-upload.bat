@@ -50,31 +50,27 @@ if %ERRORLEVEL% EQU 0 (
     echo All old files deleted from GitHub
     echo Fresh copy uploaded successfully
     echo.
-    echo Check it out: https://github.com/geygey123123/shikaraka-anime-portal
+    echo Check: https://github.com/geygey123123/shikaraka-anime-portal
     echo.
-    echo Next steps:
-    echo 1. Verify all files on GitHub
-    echo 2. Check .kiro/specs/shikaraka-v2-features/ for new features
-    echo 3. Follow VERCEL_SETUP_GUIDE.md to redeploy
+    echo Next: Check .kiro/specs/shikaraka-v2-features/ for new features
 ) else (
     echo ========================================
     echo ERROR: Authentication Failed!
     echo ========================================
     echo.
-    echo GitHub больше не поддерживает пароли для Git!
-    echo Нужен Personal Access Token.
+    echo GitHub needs Personal Access Token, not password!
     echo.
-    echo РЕШЕНИЕ 1 (ПРОЩЕ): Используйте GitHub Desktop
-    echo   1. Скачайте: https://desktop.github.com/
-    echo   2. Войдите в аккаунт
-    echo   3. Откройте эту папку в GitHub Desktop
-    echo   4. Нажмите Push
+    echo SOLUTION 1 - Use GitHub Desktop:
+    echo   1. Download: https://desktop.github.com/
+    echo   2. Login to your account
+    echo   3. Open this folder in GitHub Desktop
+    echo   4. Click Push
     echo.
-    echo РЕШЕНИЕ 2: Настройте токен
-    echo   Откройте файл GITHUB_TOKEN_SETUP.md
-    echo   Следуйте инструкциям для создания токена
+    echo SOLUTION 2 - Setup token:
+    echo   Open GITHUB_TOKEN_SETUP.md file
+    echo   Follow instructions to create token
     echo.
-    echo После настройки запустите этот скрипт снова!
+    echo Then run this script again!
 )
 echo.
 pause
