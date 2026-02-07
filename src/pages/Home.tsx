@@ -113,7 +113,7 @@ export const Home: React.FC = () => {
                 </h2>
                 <SearchComponent
                   onAnimeSelect={handleAnimeClick}
-                  initialFilters={filters}
+                  filters={filters}
                   showPagination={true}
                   searchQuery={searchQuery}
                 />

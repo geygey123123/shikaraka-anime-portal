@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useSearch } from '../../hooks/useSearch';
 import { usePagination } from '../../hooks/usePagination';
-import { useFilters } from '../../hooks/useFilters';
 import { handleAPIError } from '../../utils/errorHandling';
 import type { SearchFilters } from '../../types/anime';
 import { AnimeCard } from './AnimeCard';
@@ -13,19 +12,18 @@ import { Pagination } from '../pagination/Pagination';
 
 interface SearchComponentProps {
   onAnimeSelect?: (animeId: number) => void;
-  initialFilters?: SearchFilters;
+  filters?: SearchFilters; // Changed from initialFilters
   showPagination?: boolean;
   searchQuery?: string; // External search query
 }
 
 export const SearchComponent: React.FC<SearchComponentProps> = ({
   onAnimeSelect,
-  initialFilters = {},
+  filters = {}, // Changed from initialFilters
   showPagination = true,
   searchQuery: externalSearchQuery,
 }) => {
   const navigate = useNavigate();
-  const { filters } = useFilters(initialFilters);
   const { currentPage, goToPage } = usePagination(1);
   const [loadingGroups, setLoadingGroups] = React.useState<Set<number>>(new Set());
 
@@ -35,10 +33,10 @@ export const SearchComponent: React.FC<SearchComponentProps> = ({
   // Debounce search query (300ms)
   const debouncedQuery = useDebounce(searchQuery, 300);
 
-  // Use search hook with debounced query
+  // Use search hook with debounced query and filters from props
   const { results, isLoading, error, toggleGroup, refetch } = useSearch(
     debouncedQuery,
-    filters,
+    filters, // Use filters from props
     { pageSize: 20 }
   );
 
