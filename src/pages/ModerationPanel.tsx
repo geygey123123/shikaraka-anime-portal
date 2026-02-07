@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { ArrowLeft, Shield } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useIsAdmin, useIsModerator } from '../hooks/useAdmin';
@@ -14,17 +14,17 @@ export const ModerationPanel: React.FC = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useIsAdmin();
-  const isModerator = useIsModerator();
+  const { isModerator, isLoading: moderatorLoading } = useIsModerator();
 
-  // Wait for authentication and admin status to load
-  if (authLoading || adminLoading) {
+  // Wait for authentication and admin/moderator status to load
+  if (authLoading || adminLoading || moderatorLoading) {
     return <LoadingScreen />;
   }
 
   // Redirect if not authenticated or not a moderator/admin
+  // Use Navigate component instead of navigate() to avoid setState during render
   if (!user || (!isAdmin && !isModerator)) {
-    navigate('/');
-    return null;
+    return <Navigate to="/" replace />;
   }
 
   return (

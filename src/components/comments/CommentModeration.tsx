@@ -24,12 +24,10 @@ export const CommentModeration: React.FC<CommentModerationProps> = ({ userId }) 
   const { data: comments, isLoading, error } = useQuery<Comment[], Error>({
     queryKey: ['moderationComments', filter],
     queryFn: async () => {
+      // First, get comments
       let query = supabase
         .from('comments')
-        .select(`
-          *,
-          profiles:user_id (username, avatar_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -40,10 +38,25 @@ export const CommentModeration: React.FC<CommentModerationProps> = ({ userId }) 
         query = query.eq('is_deleted', false);
       }
 
-      const { data, error } = await query;
+      const { data: commentsData, error: commentsError } = await query;
 
-      if (error) throw error;
-      return data || [];
+      if (commentsError) throw commentsError;
+      if (!commentsData || commentsData.length === 0) return [];
+
+      // Then, fetch profiles separately
+      const userIds = [...new Set(commentsData.map(c => c.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .in('id', userIds);
+
+      // Map profiles to comments
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+      return commentsData.map(comment => ({
+        ...comment,
+        profiles: profileMap.get(comment.user_id) || { username: null, avatar_url: null }
+      }));
     },
     staleTime: 1 * 60 * 1000, // 1 minute
   });

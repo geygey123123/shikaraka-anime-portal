@@ -31,7 +31,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   const addComment = useAddComment();
   const deleteComment = useDeleteComment();
   const { isAdmin } = useIsAdmin();
-  const isModerator = useIsModerator();
+  const { isModerator } = useIsModerator();
 
   const handleAddComment = async (content: string) => {
     try {

@@ -17,33 +17,47 @@ class AdminService {
    * @returns Admin statistics object
    */
   async getStatistics(): Promise<AdminStats> {
-    const [
-      totalUsers,
-      activeUsers,
-      totalFavorites,
-      totalComments,
-      totalRatings,
-      topAnime,
-      topRated,
-    ] = await Promise.all([
-      this.getTotalUsers(),
-      this.getActiveUsers(),
-      this.getTotalFavorites(),
-      this.getTotalComments(),
-      this.getTotalRatings(),
-      this.getTopAnime(),
-      this.getTopRated(),
-    ]);
+    try {
+      const [
+        totalUsers,
+        activeUsers,
+        totalFavorites,
+        totalComments,
+        totalRatings,
+        topAnime,
+        topRated,
+      ] = await Promise.allSettled([
+        this.getTotalUsers(),
+        this.getActiveUsers(),
+        this.getTotalFavorites(),
+        this.getTotalComments(),
+        this.getTotalRatings(),
+        this.getTopAnime(),
+        this.getTopRated(),
+      ]);
 
-    return {
-      totalUsers,
-      activeUsers,
-      totalFavorites,
-      totalComments,
-      totalRatings,
-      topAnime,
-      topRated,
-    };
+      return {
+        totalUsers: totalUsers.status === 'fulfilled' ? totalUsers.value : 0,
+        activeUsers: activeUsers.status === 'fulfilled' ? activeUsers.value : 0,
+        totalFavorites: totalFavorites.status === 'fulfilled' ? totalFavorites.value : 0,
+        totalComments: totalComments.status === 'fulfilled' ? totalComments.value : 0,
+        totalRatings: totalRatings.status === 'fulfilled' ? totalRatings.value : 0,
+        topAnime: topAnime.status === 'fulfilled' ? topAnime.value : [],
+        topRated: topRated.status === 'fulfilled' ? topRated.value : [],
+      };
+    } catch (error) {
+      console.error('Error getting admin statistics:', error);
+      // Return default values if there's an error
+      return {
+        totalUsers: 0,
+        activeUsers: 0,
+        totalFavorites: 0,
+        totalComments: 0,
+        totalRatings: 0,
+        topAnime: [],
+        topRated: [],
+      };
+    }
   }
 
   /**
@@ -51,12 +65,20 @@ class AdminService {
    * @returns Total user count
    */
   private async getTotalUsers(): Promise<number> {
-    const { count, error } = await supabase
-      .from('profiles')
-      .select('*', { count: 'exact', head: true });
+    try {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
 
-    if (error) throw error;
-    return count || 0;
+      if (error) {
+        console.error('Error getting total users:', error);
+        return 0;
+      }
+      return count || 0;
+    } catch (error) {
+      console.error('Exception getting total users:', error);
+      return 0;
+    }
   }
 
   /**
@@ -64,16 +86,24 @@ class AdminService {
    * @returns Active user count
    */
   private async getActiveUsers(): Promise<number> {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    try {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const { count, error } = await supabase
-      .from('profiles')
-      .select('*', { count: 'exact', head: true })
-      .gte('last_active', sevenDaysAgo.toISOString());
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('last_active', sevenDaysAgo.toISOString());
 
-    if (error) throw error;
-    return count || 0;
+      if (error) {
+        console.error('Error getting active users:', error);
+        return 0;
+      }
+      return count || 0;
+    } catch (error) {
+      console.error('Exception getting active users:', error);
+      return 0;
+    }
   }
 
   /**
@@ -81,12 +111,20 @@ class AdminService {
    * @returns Total favorites count
    */
   private async getTotalFavorites(): Promise<number> {
-    const { count, error } = await supabase
-      .from('favorites')
-      .select('*', { count: 'exact', head: true });
+    try {
+      const { count, error } = await supabase
+        .from('favorites')
+        .select('*', { count: 'exact', head: true });
 
-    if (error) throw error;
-    return count || 0;
+      if (error) {
+        console.error('Error getting total favorites:', error);
+        return 0;
+      }
+      return count || 0;
+    } catch (error) {
+      console.error('Exception getting total favorites:', error);
+      return 0;
+    }
   }
 
   /**
@@ -94,13 +132,21 @@ class AdminService {
    * @returns Total comments count
    */
   private async getTotalComments(): Promise<number> {
-    const { count, error } = await supabase
-      .from('comments')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_deleted', false);
+    try {
+      const { count, error } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_deleted', false);
 
-    if (error) throw error;
-    return count || 0;
+      if (error) {
+        console.error('Error getting total comments:', error);
+        return 0;
+      }
+      return count || 0;
+    } catch (error) {
+      console.error('Exception getting total comments:', error);
+      return 0;
+    }
   }
 
   /**
@@ -108,12 +154,20 @@ class AdminService {
    * @returns Total ratings count
    */
   private async getTotalRatings(): Promise<number> {
-    const { count, error } = await supabase
-      .from('ratings')
-      .select('*', { count: 'exact', head: true });
+    try {
+      const { count, error } = await supabase
+        .from('ratings')
+        .select('*', { count: 'exact', head: true });
 
-    if (error) throw error;
-    return count || 0;
+      if (error) {
+        console.error('Error getting total ratings:', error);
+        return 0;
+      }
+      return count || 0;
+    } catch (error) {
+      console.error('Exception getting total ratings:', error);
+      return 0;
+    }
   }
 
   /**
@@ -121,30 +175,38 @@ class AdminService {
    * @returns Array of top anime with counts
    */
   async getTopAnime(): Promise<Array<{ anime_id: number; count: number; anime_name: string }>> {
-    const { data, error } = await supabase
-      .from('favorites')
-      .select('anime_id, anime_name');
+    try {
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('anime_id, anime_name');
 
-    if (error) throw error;
-    if (!data || data.length === 0) return [];
-
-    // Group by anime_id and count occurrences
-    const grouped = data.reduce((acc, item) => {
-      const existing = acc.find(a => a.anime_id === item.anime_id);
-      if (existing) {
-        existing.count++;
-      } else {
-        acc.push({
-          anime_id: item.anime_id,
-          anime_name: item.anime_name || 'Unknown',
-          count: 1,
-        });
+      if (error) {
+        console.error('Error getting top anime:', error);
+        return [];
       }
-      return acc;
-    }, [] as Array<{ anime_id: number; anime_name: string; count: number }>);
+      if (!data || data.length === 0) return [];
 
-    // Sort by count descending and return top 10
-    return grouped.sort((a, b) => b.count - a.count).slice(0, 10);
+      // Group by anime_id and count occurrences
+      const grouped = data.reduce((acc, item) => {
+        const existing = acc.find(a => a.anime_id === item.anime_id);
+        if (existing) {
+          existing.count++;
+        } else {
+          acc.push({
+            anime_id: item.anime_id,
+            anime_name: item.anime_name || 'Unknown',
+            count: 1,
+          });
+        }
+        return acc;
+      }, [] as Array<{ anime_id: number; anime_name: string; count: number }>);
+
+      // Sort by count descending and return top 10
+      return grouped.sort((a, b) => b.count - a.count).slice(0, 10);
+    } catch (error) {
+      console.error('Exception getting top anime:', error);
+      return [];
+    }
   }
 
   /**
@@ -152,7 +214,12 @@ class AdminService {
    * @returns Array of top rated anime
    */
   async getTopRated(): Promise<Array<{ anime_id: number; weighted: number; count: number }>> {
-    return await ratingsService.getTopRatedAnime(10);
+    try {
+      return await ratingsService.getTopRatedAnime(10);
+    } catch (error) {
+      console.error('Exception getting top rated anime:', error);
+      return [];
+    }
   }
 }
 

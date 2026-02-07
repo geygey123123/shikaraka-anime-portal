@@ -51,10 +51,12 @@ export const useIsAdmin = (): { isAdmin: boolean; isLoading: boolean } => {
     is_admin: profile?.is_admin 
   });
 
+  // Return loading state while checking
   if (authLoading || profileLoading) {
     return { isAdmin: false, isLoading: true };
   }
 
+  // Return admin status
   return {
     isAdmin: profile?.is_admin === true,
     isLoading: false,
@@ -92,17 +94,24 @@ export const useModerators = () => {
 
 /**
  * Hook для проверки, является ли текущий пользователь модератором
- * @returns True если пользователь является модератором
+ * @returns Object with isModerator status and loading state
  */
-export const useIsModerator = (): boolean => {
-  const { user } = useAuth();
-  const { data: moderators } = useModerators();
+export const useIsModerator = (): { isModerator: boolean; isLoading: boolean } => {
+  const { user, loading: authLoading } = useAuth();
+  const { data: moderators, isLoading: moderatorsLoading } = useModerators();
 
-  if (!user || !moderators) {
-    return false;
+  if (authLoading || moderatorsLoading) {
+    return { isModerator: false, isLoading: true };
   }
 
-  return moderators.some(m => m.user_id === user.id);
+  if (!user || !moderators) {
+    return { isModerator: false, isLoading: false };
+  }
+
+  return {
+    isModerator: moderators.some(m => m.user_id === user.id),
+    isLoading: false,
+  };
 };
 
 /**
