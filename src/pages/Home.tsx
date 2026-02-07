@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePopularAnime } from '../hooks/useAnime';
 import { usePagination } from '../hooks/usePagination';
 import { useFilters } from '../hooks/useFilters';
+import type { SearchFilters } from '../types/anime';
 import { AnimeGrid } from '../components/anime/AnimeGrid';
 import { Pagination } from '../components/pagination/Pagination';
 import { Header } from '../components/layout/Header';
@@ -13,7 +14,7 @@ export const Home: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const { currentPage, goToPage, resetPage } = usePagination(1);
-  const { filters, clearFilters } = useFilters();
+  const { filters, setFilter, clearFilters } = useFilters();
   
   // Fetch popular anime with pagination (only when not searching)
   const { data: popularAnimes, isLoading: isLoadingPopular, error: popularError, refetch: refetchPopular } = usePopularAnime(currentPage);
@@ -48,9 +49,12 @@ export const Home: React.FC = () => {
     goToPage(page);
   }, [goToPage]);
 
-  const handleFilterChange = useCallback(() => {
-    // Filters are already updated via useFilters hook
-  }, []);
+  const handleFilterChange = useCallback((newFilters: SearchFilters) => {
+    // Update all filters at once
+    Object.keys(newFilters).forEach((key) => {
+      setFilter(key as keyof SearchFilters, newFilters[key as keyof SearchFilters]);
+    });
+  }, [setFilter]);
 
   const handleClearFilters = useCallback(() => {
     clearFilters();

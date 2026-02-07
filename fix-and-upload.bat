@@ -24,7 +24,7 @@ git add .
 echo.
 
 echo [4/5] Committing changes...
-git commit -m "fix: filters now work in real-time, update search results"
+git commit -m "fix: filters real-time update - implement handleFilterChange"
 echo.
 
 echo [5/5] Pushing to GitHub...

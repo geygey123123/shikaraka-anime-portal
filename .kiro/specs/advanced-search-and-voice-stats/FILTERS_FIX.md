@@ -7,9 +7,11 @@
 - Выбор жанров которые не подходят под Naruto
 - Naruto все равно остается в результатах
 
-## Причина
+## Причины
 
-Проблема была в архитектуре передачи фильтров:
+Было ДВЕ проблемы:
+
+### Проблема 1: Дублирование useFilters
 
 ```typescript
 // Home.tsx
@@ -23,54 +25,64 @@ const { filters } = useFilters(); // Фильтры из Home
 const { filters } = useFilters(initialFilters); // ❌ Создавался НОВЫЙ экземпляр useFilters
 ```
 
+### Проблема 2: Пустой handleFilterChange
+
+```typescript
+// Home.tsx
+const handleFilterChange = useCallback(() => {
+  // Filters are already updated via useFilters hook
+  // ❌ НО НА САМОМ ДЕЛЕ НЕ ОБНОВЛЯЛИСЬ!
+}, []);
+```
+
 **Что происходило:**
-1. `Home.tsx` создавал свой экземпляр `useFilters()`
-2. `SearchComponent` создавал СВОЙ экземпляр `useFilters(initialFilters)`
-3. Когда пользователь менял фильтры в `FilterPanel`, обновлялся экземпляр из `Home.tsx`
-4. Но `SearchComponent` использовал СВОЙ экземпляр, который не обновлялся!
+1. `FilterPanel` вызывал `onChange(newFilters)`
+2. `Home.tsx` получал вызов `handleFilterChange()` - но функция пустая!
+3. Фильтры в `useFilters` НЕ обновлялись
+4. `SearchComponent` продолжал использовать старые фильтры
 
 ## Решение
 
-Передавать фильтры напрямую как prop, без создания нового экземпляра:
-
-### 1. Изменен интерфейс SearchComponent
+### 1. Убран дублирующий useFilters из SearchComponent
 
 ```typescript
-// Было:
-interface SearchComponentProps {
-  initialFilters?: SearchFilters; // ❌
-}
-
-// Стало:
-interface SearchComponentProps {
-  filters?: SearchFilters; // ✅ Прямая передача
-}
-```
-
-### 2. Убран useFilters из SearchComponent
-
-```typescript
-// Было:
-const { filters } = useFilters(initialFilters); // ❌ Создавал новый экземпляр
+// SearchComponent.tsx - Было:
+const { filters } = useFilters(initialFilters); // ❌
 
 // Стало:
 // Просто используем filters из props ✅
-const { results, isLoading, error, toggleGroup, refetch } = useSearch(
+const { results, isLoading, error } = useSearch(
   debouncedQuery,
-  filters, // ✅ Используем напрямую из props
+  filters, // ✅ Из props
   { pageSize: 20 }
 );
 ```
 
-### 3. Обновлен Home.tsx
+### 2. Реализован handleFilterChange в Home.tsx
 
 ```typescript
-// Было:
-<SearchComponent
-  initialFilters={filters} // ❌
-/>
+// Home.tsx - Было:
+const { filters, clearFilters } = useFilters(); // ❌ Нет setFilter
+
+const handleFilterChange = useCallback(() => {
+  // Пустая функция ❌
+}, []);
 
 // Стало:
+const { filters, setFilter, clearFilters } = useFilters(); // ✅ Добавлен setFilter
+
+const handleFilterChange = useCallback((newFilters: SearchFilters) => {
+  // Обновляем все фильтры ✅
+  Object.keys(newFilters).forEach((key) => {
+    setFilter(key as keyof SearchFilters, newFilters[key as keyof SearchFilters]);
+  });
+}, [setFilter]);
+```
+
+### 3. Передача filters как prop
+
+```typescript
+// Home.tsx
 <SearchComponent
   filters={filters} // ✅ Прямая передача
 />
@@ -80,24 +92,28 @@ const { results, isLoading, error, toggleGroup, refetch } = useSearch(
 
 ### Поток данных:
 
-1. **useFilters в Home.tsx** → Единственный источник истины для фильтров
-2. **FilterPanel** → Изменяет фильтры через `onChange`
-3. **Home.tsx** → Получает обновленные фильтры
-4. **SearchComponent** → Получает фильтры как prop
-5. **useSearch** → Использует фильтры для запроса к API
-6. **React Query** → Автоматически перезапрашивает данные при изменении фильтров
+1. **FilterPanel** → Пользователь выбирает жанр "Романтика"
+2. **FilterPanel** → Вызывает `onChange(newFilters)` с новыми фильтрами
+3. **Home.tsx** → `handleFilterChange` получает `newFilters`
+4. **Home.tsx** → Вызывает `setFilter` для каждого ключа
+5. **useFilters** → Обновляет состояние `filters`
+6. **Home.tsx** → Передает обновленные `filters` в `SearchComponent`
+7. **SearchComponent** → Получает новые `filters` через props
+8. **useSearch** → Видит изменение в `filters` (React Query dependency)
+9. **React Query** → Автоматически делает новый запрос к API
+10. **Результаты** → Обновляются в реальном времени!
 
 ### Пример работы:
 
 1. **Поиск "Naruto"** → Показываются все Naruto аниме
 2. **Выбор жанра "Романтика"** → 
-   - FilterPanel вызывает `onChange(newFilters)`
-   - Home.tsx обновляет `filters`
-   - SearchComponent получает новые `filters` через props
-   - useSearch видит изменение в `filters`
-   - React Query автоматически делает новый запрос
-   - Результаты обновляются в реальном времени
-3. **Результат** → Показываются только Naruto аниме с жанром "Романтика"
+   - FilterPanel: `onChange({ genres: ['22'] })`
+   - Home: `setFilter('genres', ['22'])`
+   - useFilters: обновляет `filters = { genres: ['22'] }`
+   - SearchComponent: получает новые `filters`
+   - useSearch: делает запрос с `?genre=22`
+   - API: возвращает только аниме с жанром "Романтика"
+3. **Результат** → Naruto исчезает (если нет жанра "Романтика")
 
 ## Тестирование
 
@@ -106,7 +122,7 @@ const { results, isLoading, error, toggleGroup, refetch } = useSearch(
 1. **Поиск аниме** (например, "Naruto")
 2. **Выберите жанр** который НЕ подходит (например, "Романтика")
    - ✅ Результаты должны обновиться
-   - ✅ Naruto должен исчезнуть если не подходит под фильтр
+   - ✅ Naruto должен исчезнуть
 3. **Выберите год** (например, 2020-2024)
    - ✅ Должны остаться только аниме из этого диапазона
 4. **Выберите тип** (например, "Фильм")
@@ -117,7 +133,7 @@ const { results, isLoading, error, toggleGroup, refetch } = useSearch(
 ## Файлы изменены
 
 - `src/components/anime/SearchComponent.tsx` - убран useFilters, фильтры из props
-- `src/pages/Home.tsx` - передача filters вместо initialFilters
+- `src/pages/Home.tsx` - реализован handleFilterChange с setFilter
 
 ## Сборка
 
