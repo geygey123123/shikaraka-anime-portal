@@ -36,6 +36,7 @@ export const Favorites: React.FC = () => {
   const { data: allFavorites } = useFavorites();
   
   const [animes, setAnimes] = useState<Anime[]>([]);
+  const [animesWithStatus, setAnimesWithStatus] = useState<Array<{ anime: Anime; watchStatus: WatchStatus }>>([]);
   const [isLoadingAnimes, setIsLoadingAnimes] = useState(false);
   const [animesError, setAnimesError] = useState<Error | null>(null);
 
@@ -63,6 +64,7 @@ export const Favorites: React.FC = () => {
     const fetchFavoriteAnimes = async () => {
       if (!favorites || favorites.length === 0) {
         setAnimes([]);
+        setAnimesWithStatus([]);
         return;
       }
 
@@ -73,16 +75,20 @@ export const Favorites: React.FC = () => {
         // Fetch anime details for each favorite
         const animePromises = favorites.map(favorite =>
           shikimoriService.getAnimeById(favorite.shikimori_id)
+            .then(anime => ({ anime, watchStatus: favorite.watch_status }))
         );
         
         const animeResults = await Promise.allSettled(animePromises);
         
         // Filter out failed requests and extract successful results
-        const successfulAnimes = animeResults
-          .filter((result): result is PromiseFulfilledResult<Anime> => result.status === 'fulfilled')
+        const successfulResults = animeResults
+          .filter((result): result is PromiseFulfilledResult<{ anime: Anime; watchStatus: WatchStatus }> => 
+            result.status === 'fulfilled'
+          )
           .map(result => result.value);
         
-        setAnimes(successfulAnimes);
+        setAnimesWithStatus(successfulResults);
+        setAnimes(successfulResults.map(r => r.anime));
       } catch (error) {
         console.error('Error fetching favorite animes:', error);
         setAnimesError(error as Error);
@@ -158,8 +164,8 @@ export const Favorites: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] pb-24">{/* Increased padding */}
-      <div className="px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-[#0a0a0c] pb-40">{/* Увеличено до pb-40 */}
+      <div className="px-4 sm:px-6 lg:px-8 py-8 pb-20">{/* Дополнительный padding */}
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl sm:text-4xl font-bold text-white">
@@ -248,10 +254,14 @@ export const Favorites: React.FC = () => {
               error={favoritesError || animesError}
               onAnimeClick={handleAnimeClick}
               onRetry={handleRetry}
+              animesWithStatus={animesWithStatus}
             />
           )}
         </div>
       </div>
+      
+      {/* Spacer для комфортной прокрутки */}
+      <div className="h-40" aria-hidden="true"></div>
     </div>
   );
 };

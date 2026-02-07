@@ -5,6 +5,7 @@ import { useIsAdmin, useIsModerator } from '../../hooks/useAdmin';
 import { useAuth } from '../../hooks/useAuth';
 import { CommentForm } from './CommentForm';
 import { CommentItem } from './CommentItem';
+import { CommentListSkeleton } from './CommentSkeleton';
 import { parseRateLimitError, logSuspiciousActivity } from '../../utils/rateLimit';
 
 interface CommentSectionProps {
@@ -69,7 +70,20 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
   const canDeleteComment = (comment: { user_id: string }) => {
     // User can delete their own comments, or if they are admin/moderator
-    return comment.user_id === currentUserId || isAdmin || isModerator;
+    const canDelete = comment.user_id === currentUserId || isAdmin || isModerator;
+    
+    // Debug logging
+    if (currentUserId) {
+      console.log('Delete permission check:', {
+        commentUserId: comment.user_id,
+        currentUserId,
+        isAdmin,
+        isModerator,
+        canDelete
+      });
+    }
+    
+    return canDelete;
   };
 
   return (
@@ -127,12 +141,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
       {/* Comments List */}
       <div className="space-y-4">
-        {isLoading && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ff0055] mx-auto mb-4"></div>
-            <p className="text-gray-400">Загрузка комментариев...</p>
-          </div>
-        )}
+        {isLoading && <CommentListSkeleton count={3} />}
 
         {error && (
           <div className="p-6 bg-red-900/20 border border-red-900 rounded-lg text-center">

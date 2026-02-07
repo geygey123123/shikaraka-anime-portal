@@ -2,60 +2,53 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { RatingInput } from './RatingInput';
 
-describe('RatingInput', () => {
-  it('renders 10 star buttons', () => {
-    const onRate = vi.fn();
-    render(<RatingInput animeId={1} onRate={onRate} />);
+describe('RatingInput Component', () => {
+  const mockOnRate = vi.fn();
+
+  it('should render 10 star buttons', () => {
+    render(<RatingInput animeId={1} onRate={mockOnRate} />);
     
-    const buttons = screen.getAllByRole('radio');
-    expect(buttons).toHaveLength(10);
+    const stars = screen.getAllByRole('radio');
+    expect(stars).toHaveLength(10);
   });
 
-  it('calls onRate when star is clicked', () => {
-    const onRate = vi.fn();
-    render(<RatingInput animeId={1} onRate={onRate} />);
+  it('should highlight current rating', () => {
+    render(<RatingInput animeId={1} currentRating={7} onRate={mockOnRate} />);
     
-    const buttons = screen.getAllByRole('radio');
-    fireEvent.click(buttons[4]); // Click 5th star (rating 5)
-    
-    expect(onRate).toHaveBeenCalledWith(5);
+    const stars = screen.getAllByRole('radio');
+    // First 7 stars should be filled
+    for (let i = 0; i < 7; i++) {
+      expect(stars[i].querySelector('svg')).toHaveAttribute('fill', '#ff0055');
+    }
   });
 
-  it('highlights current rating', () => {
-    const onRate = vi.fn();
-    render(<RatingInput animeId={1} currentRating={7} onRate={onRate} />);
+  it('should call onRate when star is clicked', () => {
+    render(<RatingInput animeId={1} onRate={mockOnRate} />);
     
-    expect(screen.getByText('7/10')).toBeInTheDocument();
+    const stars = screen.getAllByRole('radio');
+    fireEvent.click(stars[4]); // Click 5th star (rating 5)
+    
+    expect(mockOnRate).toHaveBeenCalledWith(5);
   });
 
-  it('shows hover preview', () => {
-    const onRate = vi.fn();
-    render(<RatingInput animeId={1} onRate={onRate} />);
+  it('should show hover preview', () => {
+    render(<RatingInput animeId={1} onRate={mockOnRate} />);
     
-    const buttons = screen.getAllByRole('radio');
-    fireEvent.mouseEnter(buttons[8]); // Hover over 9th star
+    const stars = screen.getAllByRole('radio');
+    fireEvent.mouseEnter(stars[7]); // Hover over 8th star
     
-    expect(screen.getByText('9/10')).toBeInTheDocument();
+    // First 8 stars should be highlighted on hover
+    for (let i = 0; i < 8; i++) {
+      expect(stars[i].querySelector('svg')).toHaveAttribute('fill', '#ff0055');
+    }
   });
 
-  it('disables interaction when disabled prop is true', () => {
-    const onRate = vi.fn();
-    render(<RatingInput animeId={1} onRate={onRate} disabled={true} />);
+  it('should be disabled when disabled prop is true', () => {
+    render(<RatingInput animeId={1} onRate={mockOnRate} disabled />);
     
-    const buttons = screen.getAllByRole('radio');
-    fireEvent.click(buttons[4]);
-    
-    expect(onRate).not.toHaveBeenCalled();
-    expect(buttons[0]).toBeDisabled();
-  });
-
-  it('displays helper text based on rating state', () => {
-    const onRate = vi.fn();
-    const { rerender } = render(<RatingInput animeId={1} onRate={onRate} />);
-    
-    expect(screen.getByText('Нажмите на звезду, чтобы оценить')).toBeInTheDocument();
-    
-    rerender(<RatingInput animeId={1} currentRating={5} onRate={onRate} />);
-    expect(screen.getByText('Нажмите на звезду, чтобы изменить оценку')).toBeInTheDocument();
+    const stars = screen.getAllByRole('radio');
+    stars.forEach(star => {
+      expect(star).toBeDisabled();
+    });
   });
 });

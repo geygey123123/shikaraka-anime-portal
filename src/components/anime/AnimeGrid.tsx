@@ -3,6 +3,7 @@ import { Anime } from '../../types/anime';
 import { AnimeCard } from './AnimeCard';
 import { SkeletonCard } from '../ui/SkeletonCard';
 import { ErrorMessage } from '../ui/ErrorMessage';
+import type { WatchStatus } from '../../hooks/useFavorites';
 
 interface AnimeGridProps {
   animes: Anime[];
@@ -10,6 +11,7 @@ interface AnimeGridProps {
   error: Error | null;
   onAnimeClick: (id: number) => void;
   onRetry?: () => void;
+  animesWithStatus?: Array<{ anime: Anime; watchStatus: WatchStatus }>;
 }
 
 export const AnimeGrid: React.FC<AnimeGridProps> = ({
@@ -18,6 +20,7 @@ export const AnimeGrid: React.FC<AnimeGridProps> = ({
   error,
   onAnimeClick,
   onRetry,
+  animesWithStatus,
 }) => {
   // Memoize skeleton array to prevent recreation on every render
   const skeletonCards = useMemo(() => 
@@ -61,9 +64,22 @@ export const AnimeGrid: React.FC<AnimeGridProps> = ({
   // Render anime grid
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-      {animes.map((anime) => (
-        <AnimeCard key={anime.id} anime={anime} onClick={onAnimeClick} />
-      ))}
+      {animesWithStatus ? (
+        // Render with watch status badges
+        animesWithStatus.map(({ anime, watchStatus }) => (
+          <AnimeCard 
+            key={anime.id} 
+            anime={anime} 
+            onClick={onAnimeClick}
+            watchStatus={watchStatus}
+          />
+        ))
+      ) : (
+        // Render without watch status
+        animes.map((anime) => (
+          <AnimeCard key={anime.id} anime={anime} onClick={onAnimeClick} />
+        ))
+      )}
     </div>
   );
 };

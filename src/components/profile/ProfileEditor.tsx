@@ -5,6 +5,7 @@ import { AvatarUpload } from './AvatarUpload';
 import { useUpdateProfile, useUploadAvatar } from '../../hooks/useAdmin';
 import { parseRateLimitError, logSuspiciousActivity } from '../../utils/rateLimit';
 import { useAuth } from '../../hooks/useAuth';
+import { useToastContext } from '../../contexts/ToastContext';
 
 interface Profile {
   id: string;
@@ -29,6 +30,7 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onCancel 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const { user } = useAuth();
+  const toast = useToastContext();
   const updateProfile = useUpdateProfile();
   const uploadAvatar = useUploadAvatar();
 
@@ -101,6 +103,7 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onCancel 
       });
 
       setSuccessMessage('Профиль успешно обновлен');
+      toast.success('Профиль успешно обновлен');
       setErrors({});
     } catch (error: any) {
       console.error('Failed to update profile:', error);
@@ -115,8 +118,11 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onCancel 
         });
         
         setErrors({ username: parsed.message });
+        toast.error(parsed.message);
       } else {
-        setErrors({ username: 'Ошибка при сохранении профиля' });
+        const errorMsg = 'Ошибка при сохранении профиля';
+        setErrors({ username: errorMsg });
+        toast.error(errorMsg);
       }
     }
   };
@@ -125,8 +131,10 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onCancel 
     try {
       await uploadAvatar.mutateAsync(file);
       setSuccessMessage('Аватар успешно загружен');
-    } catch (error) {
-      throw error; // Let AvatarUpload component handle the error display
+      toast.success('Аватар успешно загружен');
+    } catch (error: any) {
+      toast.error(error.message || 'Ошибка при загрузке аватара');
+      throw error;
     }
   };
 

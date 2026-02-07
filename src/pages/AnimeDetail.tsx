@@ -112,11 +112,11 @@ export const AnimeDetail: React.FC = () => {
   const year = anime.aired_on ? new Date(anime.aired_on).getFullYear() : 'N/A';
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-white pb-24">{/* Increased padding */}
+    <div className="min-h-screen bg-[#0a0a0c] text-white pb-40">{/* Увеличено до pb-40 для комфортной прокрутки */}
       {/* Back Button */}
       <div className="px-4 sm:px-6 lg:px-8 pt-6">
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
         >
           <ArrowLeft size={20} />
@@ -125,7 +125,7 @@ export const AnimeDetail: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div className="px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-4 sm:px-6 lg:px-8 py-8 pb-20">{/* Дополнительный padding снизу */}
         <div className="max-w-7xl mx-auto">
           {/* Desktop: Two columns, Mobile: One column */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -319,6 +319,9 @@ export const AnimeDetail: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Spacer для комфортной прокрутки */}
+      <div className="h-40" aria-hidden="true"></div>
     </div>
   );
 };

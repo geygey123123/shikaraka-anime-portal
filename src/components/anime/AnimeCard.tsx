@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Play, Clock, Check, X, Pause, type LucideIcon } from 'lucide-react';
 import { Anime } from '../../types/anime';
 import { shikimoriService } from '../../services/shikimori';
 import { RatingDisplay } from '../rating/RatingDisplay';
 import { useAnimeRating } from '../../hooks/useRatings';
+import type { WatchStatus } from '../../hooks/useFavorites';
 
 interface AnimeCardProps {
   anime: Anime;
   onClick: (id: number) => void;
+  watchStatus?: WatchStatus;
 }
 
-const AnimeCardComponent: React.FC<AnimeCardProps> = ({ anime, onClick }) => {
+const STATUS_CONFIG: Record<WatchStatus, { label: string; icon: LucideIcon; color: string; bgColor: string }> = {
+  watching: { label: 'Смотрю', icon: Play, color: '#ff0055', bgColor: 'rgba(255, 0, 85, 0.9)' },
+  plan_to_watch: { label: 'Планирую', icon: Clock, color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.9)' },
+  completed: { label: 'Завершено', icon: Check, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.9)' },
+  dropped: { label: 'Брошено', icon: X, color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.9)' },
+  on_hold: { label: 'Отложено', icon: Pause, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.9)' },
+};
+
+const AnimeCardComponent: React.FC<AnimeCardProps> = ({ anime, onClick, watchStatus }) => {
   const queryClient = useQueryClient();
   const [imageError, setImageError] = useState(false);
   
@@ -53,7 +64,7 @@ const AnimeCardComponent: React.FC<AnimeCardProps> = ({ anime, onClick }) => {
   
   return (
     <div
-      className="anime-card bg-[#0a0a0c] rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(255,0,85,0.3)]"
+      className="anime-card bg-[#0a0a0c] rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(255,0,85,0.3)] relative"
       onClick={() => onClick(anime.id)}
       onMouseEnter={handleMouseEnter}
       role="button"
@@ -66,7 +77,7 @@ const AnimeCardComponent: React.FC<AnimeCardProps> = ({ anime, onClick }) => {
       }}
     >
       {/* Poster with lazy loading */}
-      <div className="relative w-full aspect-[2/3] overflow-hidden bg-gray-900">
+      <div className="relative w-full aspect-[2/3] bg-gray-900">
         <img
           src={imageError ? '/anime-placeholder.svg' : imageUrl}
           alt={displayName}
@@ -74,6 +85,23 @@ const AnimeCardComponent: React.FC<AnimeCardProps> = ({ anime, onClick }) => {
           className="w-full h-full object-cover"
           onError={handleImageError}
         />
+        
+        {/* Watch Status Badge */}
+        {watchStatus && (
+          <div 
+            className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md shadow-lg backdrop-blur-sm"
+            style={{ backgroundColor: STATUS_CONFIG[watchStatus].bgColor }}
+          >
+            {React.createElement(STATUS_CONFIG[watchStatus].icon, {
+              size: 14,
+              color: 'white',
+              strokeWidth: 2.5
+            })}
+            <span className="text-white text-xs font-semibold">
+              {STATUS_CONFIG[watchStatus].label}
+            </span>
+          </div>
+        )}
         
         {/* Gradient overlay */}
         <div className="anime-card-gradient absolute inset-0 bg-gradient-to-t from-[rgba(10,10,12,0.9)] via-transparent to-transparent" />

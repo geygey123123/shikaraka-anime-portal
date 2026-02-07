@@ -52,6 +52,12 @@ export const useIsAdmin = (): { isAdmin: boolean; isLoading: boolean } => {
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile(user?.id);
 
+  // Debug logging for admin status
+  if (profile) {
+    console.log('Current profile:', profile);
+    console.log('is_admin status:', profile.is_admin);
+  }
+
   return {
     isAdmin: profile?.is_admin === true,
     isLoading,

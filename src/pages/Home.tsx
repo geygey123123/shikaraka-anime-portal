@@ -52,11 +52,11 @@ export const Home: React.FC = () => {
   }, [goToPage]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] pb-24">{/* Increased padding */}
+    <div className="min-h-screen bg-[#0a0a0c] pb-40">{/* Увеличено до pb-40 */}
       <Header onSearch={handleSearch} />
       
       {/* Hero Section */}
-      <section className="relative py-16 px-4 sm:px-6 lg:px-8">
+      <section className="relative py-16 px-4 sm:px-6 lg:px-8 pb-8">{/* Added bottom padding control */}
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-4">
             ShiKaraKa
@@ -96,6 +96,9 @@ export const Home: React.FC = () => {
           )}
         </div>
       </section>
+      
+      {/* Spacer для комфортной прокрутки */}
+      <div className="h-40" aria-hidden="true"></div>
     </div>
   );
 };

@@ -18,6 +18,14 @@ export const Profile: React.FC = () => {
   const { data: profile, isLoading: profileLoading } = useProfile(user?.id);
   const [isEditing, setIsEditing] = useState(false);
 
+  // Debug logging for profile data
+  React.useEffect(() => {
+    if (profile) {
+      console.log('Profile page - Current profile:', profile);
+      console.log('Profile page - is_admin:', profile.is_admin);
+    }
+  }, [profile]);
+
   // Redirect to home if not authenticated (only after auth loading is complete)
   React.useEffect(() => {
     if (!authLoading && !isAuthenticated) {

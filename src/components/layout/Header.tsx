@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, Menu, X, User, LogOut, Heart, Shield } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthModal } from '../../contexts/AuthModalContext';
-import { useIsAdmin } from '../../hooks/useAdmin';
+import { useIsAdmin, useIsModerator } from '../../hooks/useAdmin';
 import { Button } from '../ui/Button';
 
 interface HeaderProps {
@@ -14,6 +14,7 @@ export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const { openAuthModal } = useAuthModal();
   const { isAdmin, isLoading: isAdminLoading } = useIsAdmin();
+  const isModerator = useIsModerator();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -91,6 +92,15 @@ export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
                     <Button variant="ghost" size="sm" className="flex items-center gap-2">
                       <Shield size={18} />
                       <span>Админ-панель</span>
+                    </Button>
+                  </Link>
+                )}
+                
+                {!isAdminLoading && (isAdmin || isModerator) && (
+                  <Link to="/moderation">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                      <Shield size={18} />
+                      <span>Модерация</span>
                     </Button>
                   </Link>
                 )}
@@ -188,6 +198,17 @@ export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
                   >
                     <Shield size={18} />
                     <span>Админ-панель</span>
+                  </Link>
+                )}
+                
+                {!isAdminLoading && (isAdmin || isModerator) && (
+                  <Link
+                    to="/moderation"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors min-h-[44px]"
+                  >
+                    <Shield size={18} />
+                    <span>Модерация</span>
                   </Link>
                 )}
                 

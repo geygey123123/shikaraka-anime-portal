@@ -406,47 +406,47 @@
   - Document steps to clear browser cache after policy changes
   - _Support: Provide easy way to fix permission issues_
 
-- [ ] 13. Integration and styling
-  - [ ] 13.1 Apply Modern Dark Cinema theme to all new components
+- [x] 13. Integration and styling
+  - [x] 13.1 Apply Modern Dark Cinema theme to all new components
     - Use consistent color scheme (#ff0055 accent, dark backgrounds)
     - Apply consistent spacing and typography
     - Ensure responsive design for mobile
     - _Requirements: All UI requirements_
   
-  - [ ] 13.2 Add loading states and skeletons
+  - [x] 13.2 Add loading states and skeletons
     - Add skeleton screens for comments loading
     - Add spinners for avatar upload
     - Add disabled states for buttons during submission
     - _Requirements: 12.7_
   
-  - [ ] 13.3 Implement error handling and notifications
+  - [x] 13.3 Implement error handling and notifications
     - Add toast notifications for success/error
     - Implement real-time form validation
     - Show clear rate limiting error messages
     - Add fallback UI for loading errors
     - _Requirements: All requirements_
   
-  - [ ] 13.4 Update routing
+  - [x] 13.4 Update routing
     - Add /profile route
     - Add /admin route with admin guard
     - Add /moderation route with moderator guard
     - _Requirements: 3.1, 3.2, 4.6_
 
-- [ ] 14. Environment configuration
-  - [ ] 14.1 Add new environment variables
+- [x] 14. Environment configuration
+  - [x] 14.1 Add new environment variables
     - Add VITE_HCAPTCHA_SITE_KEY
     - Add VITE_ADMIN_EMAIL (lifeshindo96@gmail.com)
     - Document in .env.example
     - _Requirements: 8.1_
   
-  - [ ] 14.2 Install new dependencies
+  - [x] 14.2 Install new dependencies
     - Install @hcaptcha/react-hcaptcha
     - Install recharts for admin charts
     - Install react-dropzone for avatar upload
     - Update package.json
 
-- [ ] 15. Testing
-  - [ ]* 15.1 Write unit tests for services
+- [x] 15. Testing
+  - [x]* 15.1 Write unit tests for services
     - Test CommentsService methods
     - Test RatingsService methods including Bayesian calculation
     - Test AdminService statistics methods
@@ -454,7 +454,7 @@
     - Test StorageService validation
     - _Requirements: All service requirements_
   
-  - [ ]* 15.2 Write unit tests for components
+  - [x]* 15.2 Write unit tests for components
     - Test Pagination component
     - Test ProfileEditor component
     - Test CommentSection component
@@ -463,7 +463,7 @@
     - Test WatchStatusSelector component
     - _Requirements: All UI requirements_
   
-  - [ ]* 15.3 Write integration tests
+  - [x]* 15.3 Write integration tests
     - Test complete comment flow (add, view, delete)
     - Test complete rating flow (rate, update, view)
     - Test admin panel access and statistics
@@ -472,21 +472,21 @@
     - Test watch status management flow
     - _Requirements: All requirements_
   
-  - [ ]* 15.4 Test rate limiting
+  - [x]* 15.4 Test rate limiting
     - Test comment rate limiting (5/hour)
     - Test rating rate limiting (20/hour)
     - Test registration rate limiting (3/hour)
     - Test blocking after limit exceeded
     - _Requirements: 8.3, 8.5_
   
-  - [ ]* 15.5 Test security and permissions
+  - [x]* 15.5 Test security and permissions
     - Test admin-only access to admin panel
     - Test moderator-only access to moderation panel
     - Test RLS policies for all tables
     - Test avatar upload permissions
     - _Requirements: 3.2, 3.6, 3.7, 4.6, 11.7_
 
-- [ ] 16. Final checkpoint - Complete system test
+- [x] 16. Final checkpoint - Complete system test
   - Verify all features work end-to-end
   - Test on multiple devices and browsers
   - Verify performance meets requirements

@@ -4,7 +4,9 @@ import { lazy, Suspense } from 'react'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { LoadingScreen } from './components/ui/LoadingScreen'
 import { AuthModalProvider, useAuthModal } from './contexts/AuthModalContext'
+import { ToastProvider } from './contexts/ToastContext'
 import { AuthModal } from './components/auth/AuthModal'
+import { ProtectedRoute } from './components/routing/ProtectedRoute'
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })))
@@ -12,6 +14,7 @@ const AnimeDetail = lazy(() => import('./pages/AnimeDetail').then(module => ({ d
 const Favorites = lazy(() => import('./pages/Favorites').then(module => ({ default: module.Favorites })))
 const Profile = lazy(() => import('./pages/Profile').then(module => ({ default: module.Profile })))
 const AdminPanel = lazy(() => import('./pages/AdminPanel').then(module => ({ default: module.AdminPanel })))
+const ModerationPanel = lazy(() => import('./pages/ModerationPanel').then(module => ({ default: module.ModerationPanel })))
 const NotFound = lazy(() => import('./pages/NotFound').then(module => ({ default: module.NotFound })))
 
 const queryClient = new QueryClient({
@@ -45,9 +48,38 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/anime/:id" element={<AnimeDetail />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/admin" element={<AdminPanel />} />
+          <Route 
+            path="/favorites" 
+            element={
+              <ProtectedRoute requireAuth>
+                <Favorites />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute requireAuth>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute requireAdmin>
+                <AdminPanel />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/moderation" 
+            element={
+              <ProtectedRoute requireModerator>
+                <ModerationPanel />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
@@ -66,16 +98,18 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <AuthModalProvider>
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <AppContent />
-          </BrowserRouter>
-        </AuthModalProvider>
+        <ToastProvider>
+          <AuthModalProvider>
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+              <AppContent />
+            </BrowserRouter>
+          </AuthModalProvider>
+        </ToastProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   )
