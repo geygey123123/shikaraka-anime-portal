@@ -109,7 +109,7 @@ export const AdminPanel: React.FC = () => {
 
         {/* User Activity Chart */}
         <div className="mb-8">
-          <UserActivityChart />
+          <UserActivityChart data={stats.userActivity} />
         </div>
 
         {/* Top Anime Lists */}
