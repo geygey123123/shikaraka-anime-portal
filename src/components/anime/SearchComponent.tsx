@@ -4,7 +4,6 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { useSearch } from '../../hooks/useSearch';
 import { usePagination } from '../../hooks/usePagination';
 import { handleAPIError } from '../../utils/errorHandling';
-import type { SearchFilters } from '../../types/anime';
 import { AnimeCard } from './AnimeCard';
 import { SkeletonCard } from '../ui/SkeletonCard';
 import { ErrorMessage } from '../ui/ErrorMessage';
@@ -12,14 +11,12 @@ import { Pagination } from '../pagination/Pagination';
 
 interface SearchComponentProps {
   onAnimeSelect?: (animeId: number) => void;
-  filters?: SearchFilters; // Changed from initialFilters
   showPagination?: boolean;
   searchQuery?: string; // External search query
 }
 
 export const SearchComponent: React.FC<SearchComponentProps> = ({
   onAnimeSelect,
-  filters = {}, // Changed from initialFilters
   showPagination = true,
   searchQuery: externalSearchQuery,
 }) => {
@@ -33,10 +30,10 @@ export const SearchComponent: React.FC<SearchComponentProps> = ({
   // Debounce search query (300ms)
   const debouncedQuery = useDebounce(searchQuery, 300);
 
-  // Use search hook with debounced query and filters from props
+  // Use search hook with debounced query and empty filters
   const { results, isLoading, error, toggleGroup, refetch } = useSearch(
     debouncedQuery,
-    filters, // Use filters from props
+    {}, // Empty filters
     { pageSize: 20 }
   );
 

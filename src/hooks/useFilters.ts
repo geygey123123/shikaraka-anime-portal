@@ -5,6 +5,7 @@ import type { SearchFilters } from '../types/anime';
 interface UseFiltersResult {
   filters: SearchFilters;
   setFilter: <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => void;
+  setFilters: (filters: SearchFilters) => void;
   clearFilters: () => void;
   applyFilters: () => void;
 }
@@ -119,6 +120,7 @@ export function useFilters(initialFilters: SearchFilters = {}): UseFiltersResult
   return {
     filters,
     setFilter,
+    setFilters,
     clearFilters,
     applyFilters,
   };
