@@ -36,7 +36,6 @@ export const KodikPlayerWrapper: React.FC<KodikPlayerWrapperProps> = ({
 }) => {
   const [error, setError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [isIframeLoaded, setIsIframeLoaded] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -51,9 +50,15 @@ export const KodikPlayerWrapper: React.FC<KodikPlayerWrapperProps> = ({
   useEffect(() => {
     // PostMessage listener for Kodik iframe communication
     const handlePostMessage = async (event: MessageEvent) => {
+      console.log('Received postMessage:', {
+        origin: event.origin,
+        data: event.data,
+        type: typeof event.data,
+      });
+
       // Security: Validate origin
       const isValidOrigin = KODIK_ALLOWED_ORIGINS.some(origin => 
-        event.origin === origin || event.origin.startsWith(origin)
+        event.origin === origin || event.origin.startsWith(origin) || event.origin.includes('kodik')
       );
 
       if (!isValidOrigin) {
@@ -68,6 +73,8 @@ export const KodikPlayerWrapper: React.FC<KodikPlayerWrapperProps> = ({
       }
 
       const data = event.data as Partial<KodikMessageEvent>;
+
+      console.log('Processing Kodik event:', data);
 
       // Handle translation_change event
       if (data.type === 'translation_change' && data.translation) {
@@ -93,6 +100,7 @@ export const KodikPlayerWrapper: React.FC<KodikPlayerWrapperProps> = ({
             queryClient.invalidateQueries({ queryKey: ['voiceStats', animeId] });
             
             console.log('Voice selection recorded successfully');
+            toast.success('Выбор озвучки сохранён');
           } catch (error) {
             console.error('Failed to record voice selection:', error);
             const errorInfo = handleAPIError(error);
@@ -104,28 +112,21 @@ export const KodikPlayerWrapper: React.FC<KodikPlayerWrapperProps> = ({
       }
     };
 
-    // Wait for iframe to load before listening to messages
-    if (isIframeLoaded) {
-      window.addEventListener('message', handlePostMessage);
-    }
+    // Always listen to messages, not just when iframe is loaded
+    window.addEventListener('message', handlePostMessage);
 
     return () => {
       window.removeEventListener('message', handlePostMessage);
     };
-  }, [animeId, user, onVoiceChange, queryClient, isIframeLoaded]);
+  }, [animeId, user, onVoiceChange, queryClient, toast]);
 
   const handleRetry = () => {
     setError(false);
-    setIsIframeLoaded(false);
     setRetryCount(prev => prev + 1);
   };
 
   const handleIframeError = () => {
     setError(true);
-  };
-
-  const handleIframeLoad = () => {
-    setIsIframeLoaded(true);
   };
 
   if (error) {
@@ -174,7 +175,6 @@ export const KodikPlayerWrapper: React.FC<KodikPlayerWrapperProps> = ({
         allowFullScreen
         allow="autoplay; fullscreen; picture-in-picture"
         onError={handleIframeError}
-        onLoad={handleIframeLoad}
         title={`Видеоплеер для ${animeName}`}
       />
     </div>

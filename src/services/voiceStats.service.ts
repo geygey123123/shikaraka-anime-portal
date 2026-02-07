@@ -115,13 +115,9 @@ class VoiceStatsService {
         .select('voice_name')
         .eq('user_id', userId)
         .eq('anime_id', animeId)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to handle 0 or 1 results
 
       if (error) {
-        // If no record found, return null (not an error)
-        if (error.code === 'PGRST116') {
-          return null;
-        }
         throw new Error(`Не удалось загрузить выбор озвучки: ${error.message}`);
       }
 

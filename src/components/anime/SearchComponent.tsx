@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useSearch } from '../../hooks/useSearch';
@@ -15,23 +15,28 @@ interface SearchComponentProps {
   onAnimeSelect?: (animeId: number) => void;
   initialFilters?: SearchFilters;
   showPagination?: boolean;
+  searchQuery?: string; // External search query
 }
 
 export const SearchComponent: React.FC<SearchComponentProps> = ({
   onAnimeSelect,
   initialFilters = {},
   showPagination = true,
+  searchQuery: externalSearchQuery,
 }) => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
   const { filters } = useFilters(initialFilters);
   const { currentPage, goToPage } = usePagination(1);
+  const [loadingGroups, setLoadingGroups] = React.useState<Set<number>>(new Set());
+
+  // Use external search query
+  const searchQuery = externalSearchQuery || '';
 
   // Debounce search query (300ms)
   const debouncedQuery = useDebounce(searchQuery, 300);
 
   // Use search hook with debounced query
-  const { results, isLoading, error, toggleGroup, expandGroup, refetch } = useSearch(
+  const { results, isLoading, error, toggleGroup, refetch } = useSearch(
     debouncedQuery,
     filters,
     { pageSize: 20 }
@@ -60,15 +65,6 @@ export const SearchComponent: React.FC<SearchComponentProps> = ({
     };
   }, [results, currentPage]);
 
-  // Handle search input change
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchQuery(e.target.value);
-      goToPage(1); // Reset to first page on new search
-    },
-    [goToPage]
-  );
-
   // Handle anime click
   const handleAnimeClick = useCallback(
     (animeId: number) => {
@@ -84,17 +80,18 @@ export const SearchComponent: React.FC<SearchComponentProps> = ({
   // Handle group toggle
   const handleToggleGroup = useCallback(
     async (animeId: number) => {
-      const group = results.find((g) => g.main.id === animeId);
-      if (!group) return;
-
-      // If expanding and no related anime loaded yet, load them
-      if (!group.isExpanded && group.related.length === 0) {
-        await expandGroup(animeId);
+      setLoadingGroups((prev) => new Set(prev).add(animeId));
+      try {
+        await toggleGroup(animeId);
+      } finally {
+        setLoadingGroups((prev) => {
+          const next = new Set(prev);
+          next.delete(animeId);
+          return next;
+        });
       }
-      
-      toggleGroup(animeId);
     },
-    [results, expandGroup, toggleGroup]
+    [toggleGroup]
   );
 
   // Render skeleton cards
@@ -108,25 +105,6 @@ export const SearchComponent: React.FC<SearchComponentProps> = ({
 
   return (
     <div className="w-full">
-      {/* Search Input */}
-      <div className="mb-6">
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            placeholder="Поиск аниме..."
-            className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:outline-none focus:border-purple-500 transition-colors"
-            aria-label="Поиск аниме"
-          />
-          {isLoading && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <div className="animate-spin h-5 w-5 border-2 border-purple-500 border-t-transparent rounded-full"></div>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Results */}
       <div className="space-y-6">
         {/* Loading State */}
@@ -181,74 +159,84 @@ export const SearchComponent: React.FC<SearchComponentProps> = ({
                       <span>⭐ {group.main.score}</span>
                     </div>
 
-                    {/* Expand/Collapse Button */}
-                    {group.main.id && (
-                      <button
-                        onClick={() => handleToggleGroup(group.main.id)}
-                        className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors flex items-center gap-1"
-                        aria-expanded={group.isExpanded}
-                        aria-label={
-                          group.isExpanded
-                            ? 'Скрыть связанные аниме'
-                            : 'Показать связанные аниме'
-                        }
-                      >
-                        {group.isExpanded ? (
-                          <>
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 15l7-7 7 7"
-                              />
-                            </svg>
-                            Скрыть связанные
-                          </>
-                        ) : (
-                          <>
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 9l-7 7-7-7"
-                              />
-                            </svg>
-                            Показать связанные
-                          </>
-                        )}
-                      </button>
-                    )}
+                    {/* Expand/Collapse Button - Always show */}
+                    <button
+                      onClick={() => handleToggleGroup(group.main.id)}
+                      disabled={loadingGroups.has(group.main.id)}
+                      className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-expanded={group.isExpanded}
+                      aria-label={
+                        group.isExpanded
+                          ? 'Скрыть связанные аниме'
+                          : 'Показать связанные аниме'
+                      }
+                    >
+                      {loadingGroups.has(group.main.id) ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-purple-400 border-t-transparent rounded-full"></div>
+                          Загрузка...
+                        </>
+                      ) : group.isExpanded ? (
+                        <>
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 15l7-7 7 7"
+                            />
+                          </svg>
+                          Скрыть связанные
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                          Показать связанные
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
 
                 {/* Related Anime (Expanded) */}
-                {group.isExpanded && group.related.length > 0 && (
+                {group.isExpanded && (
                   <div className="ml-8 pl-4 border-l-2 border-gray-700">
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                      {group.related.map((related) => (
-                        <div key={related.anime.id} className="space-y-2">
-                          <AnimeCard
-                            anime={related.anime}
-                            onClick={handleAnimeClick}
-                          />
-                          <p className="text-xs text-gray-500 text-center">
-                            {related.relation_russian || related.relation}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                    {group.related.length > 0 ? (
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {group.related.map((related) => (
+                          <div key={related.anime.id} className="space-y-2">
+                            <AnimeCard
+                              anime={related.anime}
+                              onClick={handleAnimeClick}
+                            />
+                            <p className="text-xs text-gray-500 text-center">
+                              {related.relation_russian || related.relation}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-4 text-center text-gray-500 text-sm">
+                        Связанные аниме не найдены
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

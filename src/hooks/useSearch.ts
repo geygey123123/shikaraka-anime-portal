@@ -87,7 +87,7 @@ export function useSearch(
             if (!oldData) return oldData;
 
             return oldData.map((group) => {
-              if (group.main.id === animeId) {
+              if (group?.main?.id === animeId) {
                 return {
                   ...group,
                   related: sortedRelated,
@@ -107,7 +107,28 @@ export function useSearch(
 
         setExpandedGroups((prev) => new Set(prev).add(animeId));
       } catch (error) {
-        console.error('Failed to load related anime:', error);
+        console.error('[expandGroup] Failed to load related anime:', error);
+        
+        // Все равно помечаем как раскрытое, чтобы показать пустое состояние
+        queryClient.setQueryData<GroupedAnime[]>(
+          ['search', query, filters, page],
+          (oldData) => {
+            if (!oldData) return oldData;
+
+            return oldData.map((group) => {
+              if (group?.main?.id === animeId) {
+                return {
+                  ...group,
+                  related: [],
+                  isExpanded: true,
+                };
+              }
+              return group;
+            });
+          }
+        );
+        
+        setExpandedGroups((prev) => new Set(prev).add(animeId));
       }
     },
     [expandedGroups, queryClient, query, filters, page]
@@ -115,30 +136,52 @@ export function useSearch(
 
   // Функция для переключения раскрытия группы
   const toggleGroup = useCallback(
-    (animeId: number) => {
-      queryClient.setQueryData<GroupedAnime[]>(
-        ['search', query, filters, page],
-        (oldData) => {
-          if (!oldData) return oldData;
+    async (animeId: number) => {
+      // Сначала получаем текущее состояние
+      const currentData = queryClient.getQueryData<GroupedAnime[]>(['search', query, filters, page]);
+      if (!currentData) {
+        return;
+      }
 
-          return oldData.map((group) => {
-            if (group.main.id === animeId) {
-              const newIsExpanded = !group.isExpanded;
-              
-              // Если раскрываем и еще не загружали связанные аниме
-              if (newIsExpanded && group.related.length === 0) {
-                expandGroup(animeId);
+      const group = currentData.find((g) => g?.main?.id === animeId);
+      if (!group || !group.main) {
+        return;
+      }
+
+      const newIsExpanded = !group.isExpanded;
+
+      // Если закрываем - убираем из expandedGroups
+      if (!newIsExpanded) {
+        setExpandedGroups((prev) => {
+          const next = new Set(prev);
+          next.delete(animeId);
+          return next;
+        });
+      }
+
+      // Если раскрываем и еще не загружали связанные аниме
+      if (newIsExpanded && group.related.length === 0) {
+        // Сначала загружаем связанные аниме
+        await expandGroup(animeId);
+      } else {
+        // Просто переключаем состояние
+        queryClient.setQueryData<GroupedAnime[]>(
+          ['search', query, filters, page],
+          (oldData) => {
+            if (!oldData) return oldData;
+
+            return oldData.map((g) => {
+              if (g?.main?.id === animeId) {
+                return {
+                  ...g,
+                  isExpanded: newIsExpanded,
+                };
               }
-
-              return {
-                ...group,
-                isExpanded: newIsExpanded,
-              };
-            }
-            return group;
-          });
-        }
-      );
+              return g;
+            });
+          }
+        );
+      }
     },
     [queryClient, query, filters, page, expandGroup]
   );

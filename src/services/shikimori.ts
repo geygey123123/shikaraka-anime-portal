@@ -130,7 +130,6 @@ class ShikimoriService {
 
         if (!response.ok) {
           if (response.status === 404) {
-            // Если аниме не найдено, возвращаем пустой массив
             return [];
           }
           throw new APIError(
@@ -141,7 +140,18 @@ class ShikimoriService {
         }
 
         const data = await response.json();
-        return data;
+        
+        // Проверяем что data это массив
+        if (!Array.isArray(data)) {
+          return [];
+        }
+        
+        // Фильтруем только аниме (не манга и т.д.)
+        const animeOnly = data.filter((item: any) => {
+          return item.anime && typeof item.anime === 'object';
+        });
+        
+        return animeOnly;
       } catch (error) {
         logError('getRelatedAnime', error);
         

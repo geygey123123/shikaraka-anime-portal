@@ -12,7 +12,6 @@ import { FilterPanel } from '../components/anime/FilterPanel';
 export const Home: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
   const { currentPage, goToPage, resetPage } = usePagination(1);
   const { filters, clearFilters } = useFilters();
   
@@ -59,7 +58,16 @@ export const Home: React.FC = () => {
   }, [clearFilters]);
 
   // Detect mobile for drawer mode
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] pb-40">
@@ -107,6 +115,7 @@ export const Home: React.FC = () => {
                   onAnimeSelect={handleAnimeClick}
                   initialFilters={filters}
                   showPagination={true}
+                  searchQuery={searchQuery}
                 />
               </div>
 
@@ -122,30 +131,9 @@ export const Home: React.FC = () => {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl sm:text-3xl font-bold text-white">
-                  Популярные аниме
-                </h2>
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                    />
-                  </svg>
-                  Фильтры
-                </button>
-              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                Популярные аниме
+              </h2>
 
               <AnimeGrid
                 animes={popularAnimes || []}

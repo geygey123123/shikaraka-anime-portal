@@ -11,6 +11,7 @@ import { RatingDisplay, RatingInput, RatingStats } from '../components/rating';
 import { useAuth } from '../hooks/useAuth';
 import { useAnimeRating, useUserRating, useSetRating } from '../hooks/useRatings';
 import { parseRateLimitError, logSuspiciousActivity } from '../utils/rateLimit';
+import { parseBBCode, formatRating } from '../utils/bbcode';
 
 export const AnimeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -283,16 +284,6 @@ export const AnimeDetail: React.FC = () => {
                 </div>
               )}
 
-              {/* Description */}
-              {anime.description && (
-                <div>
-                  <h3 className="text-xl font-semibold mb-3">Описание</h3>
-                  <p className="text-gray-400 leading-relaxed">
-                    {anime.description}
-                  </p>
-                </div>
-              )}
-
               {/* Additional Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-800">
                 <div>
@@ -311,11 +302,21 @@ export const AnimeDetail: React.FC = () => {
                 
                 {anime.rating && (
                   <div>
-                    <p className="text-gray-500 text-sm mb-1">Рейтинг</p>
-                    <p className="text-gray-300">{anime.rating}</p>
+                    <p className="text-gray-500 text-sm mb-1">Возрастной рейтинг</p>
+                    <p className="text-gray-300">{formatRating(anime.rating)}</p>
                   </div>
                 )}
               </div>
+
+              {/* Description */}
+              {anime.description && (
+                <div>
+                  <h3 className="text-xl font-semibold mb-3">Описание</h3>
+                  <p className="text-gray-400 leading-relaxed whitespace-pre-line">
+                    {parseBBCode(anime.description)}
+                  </p>
+                </div>
+              )}
 
               {/* Comment Section */}
               <CommentSection

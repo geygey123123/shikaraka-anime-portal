@@ -24,7 +24,7 @@ git add .
 echo.
 
 echo [4/5] Committing changes...
-git commit -m "fix: admin panel access, back button, status badges"
+git commit -m "fix: related anime toggle, remove console spam, improve search"
 echo.
 
 echo [5/5] Pushing to GitHub...
