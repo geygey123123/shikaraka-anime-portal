@@ -10,6 +10,8 @@ import { AuthModal } from './components/auth/AuthModal'
 const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })))
 const AnimeDetail = lazy(() => import('./pages/AnimeDetail').then(module => ({ default: module.AnimeDetail })))
 const Favorites = lazy(() => import('./pages/Favorites').then(module => ({ default: module.Favorites })))
+const Profile = lazy(() => import('./pages/Profile').then(module => ({ default: module.Profile })))
+const AdminPanel = lazy(() => import('./pages/AdminPanel').then(module => ({ default: module.AdminPanel })))
 const NotFound = lazy(() => import('./pages/NotFound').then(module => ({ default: module.NotFound })))
 
 const queryClient = new QueryClient({
@@ -44,6 +46,8 @@ function AppContent() {
           <Route path="/" element={<Home />} />
           <Route path="/anime/:id" element={<AnimeDetail />} />
           <Route path="/favorites" element={<Favorites />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/admin" element={<AdminPanel />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

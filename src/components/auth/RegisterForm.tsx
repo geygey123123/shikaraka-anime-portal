@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
+import { CaptchaField } from '../captcha/CaptchaField';
+import { RegistrationRateLimiter, formatRemainingTime } from '../../utils/rateLimit';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -12,11 +14,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ 
     email?: string; 
     password?: string; 
     confirmPassword?: string;
+    captcha?: string;
     general?: string;
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +60,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check client-side registration rate limit
+    const rateLimitCheck = RegistrationRateLimiter.canRegister();
+    if (!rateLimitCheck.allowed) {
+      const timeStr = formatRemainingTime(rateLimitCheck.remainingTime || 0);
+      setErrors({ 
+        general: `Слишком много попыток регистрации. Попробуйте снова через ${timeStr}.` 
+      });
+      return;
+    }
+    
     // Защита от множественных попыток (минимум 3 секунды между попытками)
     const now = Date.now();
     if (now - lastSubmitTime < 3000) {
@@ -67,6 +81,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
     const confirmPasswordError = validateConfirmPassword(password, confirmPassword);
+    
+    // Validate CAPTCHA
+    if (!captchaToken) {
+      setErrors({ captcha: 'Пожалуйста, пройдите проверку CAPTCHA' });
+      return;
+    }
     
     if (emailError || passwordError || confirmPasswordError) {
       setErrors({
@@ -84,6 +104,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
     setLastSubmitTime(now);
 
     try {
+      // Record registration attempt
+      RegistrationRateLimiter.recordAttempt();
+      
       await register(email, password);
       setSuccessMessage('Регистрация успешна! Вы можете войти в систему.');
       // Даем пользователю время прочитать сообщение перед закрытием
@@ -114,6 +137,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
       
       setErrors({ general: displayError });
       onError?.(displayError);
+      // Reset CAPTCHA on error
+      setCaptchaToken(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -196,6 +221,29 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
         />
         {errors.confirmPassword && (
           <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
+        )}
+      </div>
+
+      {/* CAPTCHA */}
+      <div>
+        <CaptchaField
+          onVerify={(token) => {
+            setCaptchaToken(token);
+            if (errors.captcha) {
+              setErrors({ ...errors, captcha: undefined });
+            }
+          }}
+          onError={() => {
+            setCaptchaToken(null);
+            setErrors({ ...errors, captcha: 'Ошибка проверки CAPTCHA. Попробуйте снова.' });
+          }}
+          onExpire={() => {
+            setCaptchaToken(null);
+            setErrors({ ...errors, captcha: 'CAPTCHA истекла. Пожалуйста, пройдите проверку снова.' });
+          }}
+        />
+        {errors.captcha && (
+          <p className="mt-2 text-sm text-red-500 text-center">{errors.captcha}</p>
         )}
       </div>
 

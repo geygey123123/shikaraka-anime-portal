@@ -82,4 +82,6 @@ export interface Favorite {
   shikimori_id: number;
   anime_name: string;
   added_at: string;
+  watch_status?: string;
+  status_updated_at?: string;
 }

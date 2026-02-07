@@ -55,20 +55,26 @@ if %ERRORLEVEL% EQU 0 (
     echo Next: Check .kiro/specs/shikaraka-v2-features/ for new features
 ) else (
     echo ========================================
-    echo ERROR: Authentication Failed!
+    echo ERROR: Push failed
     echo ========================================
     echo.
-    echo GitHub needs Personal Access Token, not password!
+    echo This might be because:
+    echo 1. You need to authenticate with GitHub
+    echo 2. The repository does not exist
+    echo 3. You do not have force push permissions
     echo.
-    echo SOLUTION 1 - Use GitHub Desktop:
+    echo SOLUTION 1 - Use GitHub Desktop (recommended):
     echo   1. Download: https://desktop.github.com/
     echo   2. Login to your account
     echo   3. Open this folder in GitHub Desktop
-    echo   4. Click Push
+    echo   4. Click Push origin
     echo.
-    echo SOLUTION 2 - Setup token:
-    echo   Open GITHUB_TOKEN_SETUP.md file
-    echo   Follow instructions to create token
+    echo SOLUTION 2 - Create Personal Access Token:
+    echo   1. Open GITHUB_TOKEN_SETUP.md file
+    echo   2. Follow instructions to create token
+    echo   3. Run: git config --global credential.helper store
+    echo   4. Run this script again
+    echo   5. Enter username and token when prompted
     echo.
     echo Then run this script again!
 )

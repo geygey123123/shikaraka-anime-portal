@@ -2,170 +2,507 @@
 
 ## Overview
 
-Сокращенный план для экономии времени и AI credits. Задачи объединены в крупные блоки.
+Этот план реализует расширенные функции для ShiKaraKa аниме-портала, включая пагинацию, кастомизацию профилей, админ-панель, систему комментариев, собственную систему рейтингов, модерацию, защиту от ботов и расширенное управление избранным. Реализация следует существующей архитектуре с React, TypeScript, Supabase и Tailwind CSS.
 
 ## Tasks
 
-### Phase 1: Database & Infrastructure
+- [x] 1. Database setup and migrations
+  - [x] 1.1 Create new database tables
+    - Create moderators table with RLS policies
+    - Create comments table with RLS policies
+    - Create ratings table with RLS policies
+    - Create rate_limits table with RLS policies
+    - _Requirements: 10.1, 10.2, 10.3, 10.4_
+  
+  - [x] 1.2 Update existing tables
+    - Add watch_status and status_updated_at to favorites table
+    - Add is_admin, avatar_url, bio, and last_active to profiles table
+    - _Requirements: 10.5, 10.6_
+  
+  - [x] 1.3 Create database trigger for admin flag
+    - Create set_admin_flag() function
+    - Create on_auth_user_created trigger to auto-set is_admin for lifeshindo96@gmail.com
+    - _Requirements: 3.8, 10.7_
+  
+  - [x] 1.4 Create database indexes
+    - Create indexes for comments (anime_id, created_at), (user_id)
+    - Create indexes for ratings (anime_id), (user_id, anime_id)
+    - Create indexes for rate_limits (user_id, action_type, window_start)
+    - Create indexes for moderators (user_id, email)
+    - _Requirements: 10.8_
+  
+  - [x] 1.5 Set up Supabase Storage bucket for avatars
+    - Create "avatars" bucket with public access
+    - Configure size limit (2MB) and allowed file types (JPG, PNG, WebP)
+    - Set up RLS policies for avatar uploads
+    - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.7_
 
-- [ ] 1. Создание базы данных (все таблицы и миграции)
-  - Создать таблицы: moderators, comments, ratings, rate_limits
-  - Обновить таблицы: profiles (is_admin, avatar_url, bio), favorites (watch_status)
-  - Настроить все RLS policies и индексы
-  - Создать trigger для автоматической установки is_admin для lifeshindo96@gmail.com
-  - _Requirements: 10.*_
+- [x] 2. Core services implementation
+  - [x] 2.1 Implement CommentsService
+    - Write getComments() method with pagination
+    - Write addComment() method with rate limit check
+    - Write deleteComment() method with moderator support
+    - _Requirements: 5.1, 5.4, 5.8, 5.10_
+  
+  - [x] 2.2 Implement RatingsService
+    - Write getRating() method with Bayesian average calculation
+    - Write getUserRating() method
+    - Write setRating() method with rate limit check
+    - Write getTopRatedAnime() method
+    - Write getGlobalAverage() helper method
+    - Write calculateBayesianAverage() helper method
+    - _Requirements: 7.1, 7.3, 7.5, 7.8, 7.10_
+  
+  - [x] 2.3 Implement AdminService
+    - Write getStatistics() method
+    - Write getTotalUsers(), getActiveUsers() helper methods
+    - Write getTotalFavorites(), getTotalComments(), getTotalRatings() helper methods
+    - Write getTopAnime() and getTopRated() methods
+    - _Requirements: 3.3, 3.4_
+  
+  - [x] 2.4 Implement RateLimitService
+    - Write checkRateLimit() method
+    - Write updateRateLimit() helper method
+    - Implement rate limit rules for all action types
+    - Implement blocking logic for exceeded limits
+    - _Requirements: 8.3, 8.5, 8.6, 8.7_
+  
+  - [x] 2.5 Implement StorageService for avatars
+    - Write uploadAvatar() method with validation
+    - Implement file size and type validation
+    - Implement filename generation using user_id
+    - Update profile with avatar_url after upload
+    - _Requirements: 2.3, 2.4, 2.6, 2.7, 11.5, 11.6, 11.8_
+  
+  - [x] 2.6 Implement ModeratorsService
+    - Write getModerators() method
+    - Write addModerator() method with email validation
+    - Write removeModerator() method
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 2. Настройка Supabase Storage и зависимостей
-  - Создать bucket "avatars" с ограничениями (2MB, JPG/PNG/WebP)
-  - Установить: @hcaptcha/react-hcaptcha, recharts, react-dropzone, react-hot-toast
-  - _Requirements: 11.*, 8.1_
+- [x] 3. React Query hooks implementation
+  - [x] 3.1 Create useComments hooks
+    - Implement useComments(animeId, page) query hook
+    - Implement useAddComment() mutation hook with cache invalidation
+    - Implement useDeleteComment() mutation hook with cache invalidation
+    - _Requirements: 5.1, 5.4, 5.8_
+  
+  - [x] 3.2 Create useRatings hooks
+    - Implement useAnimeRating(animeId) query hook
+    - Implement useUserRating(animeId) query hook
+    - Implement useSetRating() mutation hook with cache invalidation
+    - _Requirements: 7.1, 7.3, 7.9_
+  
+  - [x] 3.3 Create useAdmin hooks
+    - Implement useAdminStats() query hook with admin check
+    - Implement useIsAdmin() hook
+    - Implement useModerators() query hook
+    - Implement useIsModerator() hook
+    - _Requirements: 3.1, 3.3, 4.6_
+  
+  - [x] 3.4 Create useProfile hooks
+    - Implement useProfile(userId) query hook
+    - Implement useUpdateProfile() mutation hook
+    - Implement useUploadAvatar() mutation hook
+    - _Requirements: 2.1, 2.2, 2.3, 2.8_
+  
+  - [x] 3.5 Create useFavorites hooks updates
+    - Update useFavorites to support watch_status filtering
+    - Implement useUpdateWatchStatus() mutation hook
+    - _Requirements: 9.2, 9.3, 9.5_
+  
+  - [x] 3.6 Create usePagination hook
+    - Implement usePagination(initialPage) hook
+    - Handle page state and navigation
+    - _Requirements: 1.1, 1.2, 1.3_
 
-### Phase 2: Core Services
+- [x] 4. UI Components - Pagination
+  - [x] 4.1 Create Pagination component
+    - Implement page navigation buttons (Previous/Next)
+    - Display current page and total pages
+    - Handle disabled states for first/last pages
+    - Implement scroll to top on page change
+    - Style with Modern Dark Cinema theme
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
+  
+  - [x] 4.2 Update Home page with pagination
+    - Integrate Pagination component
+    - Update anime fetching to use page parameter
+    - Show skeleton screen during page loading
+    - Implement React Query caching for pages
+    - _Requirements: 1.2, 1.3, 1.6, 1.7_
 
-- [ ] 3. Реализация всех сервисов
-  - Создать CommentsService (getComments, addComment, deleteComment с rate limiting)
-  - Создать RatingsService (getRating с байесовским средним, setRating, getTopRated)
-  - Создать AdminService (getStatistics со всеми метриками)
-  - Создать ModeratorsService (getModerators, addModerator, removeModerator)
-  - Создать RateLimitService (checkRateLimit, блокировка на 24ч)
-  - Создать StorageService (uploadAvatar с upsert, валидация)
-  - _Requirements: 5.*, 7.*, 3.*, 4.*, 8.*, 2.*_
+- [x] 5. UI Components - Profile
+  - [x] 5.1 Create ProfilePage component
+    - Display user profile information
+    - Show username, avatar, bio
+    - Display user statistics (favorites count, comments count, ratings count)
+    - _Requirements: 2.1_
+  
+  - [x] 5.2 Create ProfileEditor component
+    - Create form for editing username and bio
+    - Implement username validation (3-20 characters)
+    - Add save button with loading state
+    - Show success/error messages
+    - _Requirements: 2.2, 2.5, 2.8_
+  
+  - [x] 5.3 Create AvatarUpload component
+    - Implement file upload with drag-and-drop
+    - Show avatar preview
+    - Validate file size (max 2MB) and type (JPG, PNG, WebP)
+    - Display upload progress
+    - _Requirements: 2.3, 2.4, 2.6, 2.7_
+  
+  - [x] 5.4 Create ProfileStats component
+    - Display user activity statistics
+    - Show favorites count by watch status
+    - Show total comments and ratings
+    - _Requirements: 2.1_
 
-### Phase 3: React Query Hooks
+- [x] 6. UI Components - Comments
+  - [x] 6.1 Create CommentSection component
+    - Display comments list with pagination
+    - Show comment form for authenticated users
+    - Show login prompt for unauthenticated users
+    - Sort comments from newest to oldest
+    - _Requirements: 5.1, 5.2, 5.3, 5.6_
+  
+  - [x] 6.2 Create CommentForm component
+    - Create textarea for comment input
+    - Implement character count (10-1000 characters)
+    - Add submit button with loading state
+    - Validate comment length
+    - Handle rate limiting errors
+    - _Requirements: 5.4, 5.5, 5.10_
+  
+  - [x] 6.3 Create CommentItem component
+    - Display comment content, author, timestamp
+    - Show author username and avatar
+    - Add delete button for comment author
+    - Add delete button for moderators/admins
+    - Handle comment deletion
+    - _Requirements: 5.7, 5.8, 5.9, 6.1_
+  
+  - [x] 6.4 Create CommentModeration component
+    - Display list of recent comments for moderators
+    - Add filtering options
+    - Show delete actions for all comments
+    - Display deleted comments with "[Комментарий удален модератором]"
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+  
+  - [x] 6.5 Integrate CommentSection into anime detail page
+    - Add CommentSection at bottom of anime detail page
+    - Pass anime_id and user authentication state
+    - _Requirements: 5.1_
 
-- [ ] 4. Создание всех хуков
-  - Хуки для комментариев: useComments, useAddComment, useDeleteComment
-  - Хуки для рейтингов: useAnimeRating, useUserRating, useSetRating
-  - Хуки для админки: useAdminStats, useIsAdmin, useModerators, useIsModerator
-  - Хуки для профиля: useProfile, useUpdateProfile, useUploadAvatar
-  - Хук для пагинации: usePagination
-  - _Requirements: 5.*, 7.*, 3.*, 4.*, 2.*, 1.*_
+- [x] 7. UI Components - Ratings
+  - [x] 7.1 Create RatingDisplay component
+    - Display weighted rating with star visualization
+    - Show rating count
+    - Display simple average for cards, Bayesian for detail pages
+    - _Requirements: 7.1, 7.6, 7.10_
+  
+  - [x] 7.2 Create RatingInput component
+    - Implement 10-star rating input
+    - Add hover effects for rating preview
+    - Highlight user's current rating
+    - Handle disabled state during submission
+    - _Requirements: 7.2, 7.3_
+  
+  - [x] 7.3 Create RatingStats component
+    - Display rating distribution
+    - Show average rating and vote count
+    - _Requirements: 7.6_
+  
+  - [x] 7.4 Integrate rating components into anime detail page
+    - Add RatingDisplay to show current rating
+    - Add RatingInput for authenticated users
+    - Handle rate limiting errors
+    - Implement optimistic updates
+    - _Requirements: 7.1, 7.2, 7.3, 7.8, 7.9_
+  
+  - [x] 7.5 Update anime cards to show internal ratings
+    - Replace Shikimori ratings with internal ratings
+    - Use simple average for card display
+    - _Requirements: 7.7, 7.10_
 
-### Phase 4: UI Components - Core
+- [x] 8. UI Components - Admin Panel
+  - [x] 8.1 Create AdminPanel page
+    - Check admin permissions (is_admin = true)
+    - Display statistics dashboard
+    - Show moderator management section
+    - Protect route with admin check
+    - _Requirements: 3.1, 3.2, 3.3, 3.6, 3.7_
+  
+  - [x] 8.2 Create StatisticsCard component
+    - Display individual stat with icon
+    - Show stat value and label
+    - Style with Modern Dark Cinema theme
+    - _Requirements: 3.3_
+  
+  - [x] 8.3 Create UserActivityChart component
+    - Implement chart using recharts library
+    - Display user activity for last 30 days
+    - Style chart with theme colors
+    - _Requirements: 3.5_
+  
+  - [x] 8.4 Create TopAnimeList component
+    - Display top 10 anime by favorites
+    - Display top 10 anime by Bayesian rating
+    - Show anime name, count/rating
+    - Add links to anime detail pages
+    - _Requirements: 3.3_
+  
+  - [x] 8.5 Create ModeratorManager component
+    - Display list of current moderators
+    - Add form to add new moderator by email
+    - Implement email validation
+    - Add remove moderator button
+    - Prevent duplicate moderators
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
+  
+  - [x] 8.6 Add admin panel link to Header
+    - Show admin panel link only for admins (is_admin = true)
+    - Hide link for non-admin users
+    - _Requirements: 3.1, 3.2_
 
-- [ ] 5. Базовые UI компоненты
-  - Pagination (кнопки, прокрутка вверх)
-  - CaptchaField (hCaptcha интеграция)
-  - WatchStatusSelector (dropdown с 5 статусами)
-  - _Requirements: 1.*, 8.1, 9.*_
+- [x] 9. UI Components - Watch Status
+  - [x] 9.1 Create WatchStatusSelector component
+    - Implement dropdown with 5 watch statuses
+    - Add icons and colors for each status
+    - Handle status change
+    - _Requirements: 9.1, 9.2_
+  
+  - [x] 9.2 Update FavoriteButton component
+    - Add watch status selection when adding to favorites
+    - Show current watch status for favorited anime
+    - Allow changing watch status
+    - _Requirements: 9.1, 9.2, 9.5_
+  
+  - [x] 9.3 Update Favorites page with status tabs
+    - Create tabs for each watch status
+    - Filter anime by selected status
+    - Show count for each status
+    - Display date added and last status change
+    - _Requirements: 9.3, 9.4, 9.6, 9.7_
+  
+  - [x] 9.4 Handle favorite removal across all statuses
+    - Ensure delete works regardless of watch_status
+    - _Requirements: 9.8_
 
-- [ ] 6. Профили и аватары
-  - ProfilePage (отображение данных)
-  - ProfileEditor (форма редактирования username/bio)
-  - AvatarUpload (react-dropzone, предпросмотр)
-  - Обновить Header для отображения аватара
-  - _Requirements: 2.*_
+- [x] 10. Security - CAPTCHA and Rate Limiting
+  - [x] 10.1 Create CaptchaField component
+    - Integrate hCaptcha or reCAPTCHA
+    - Handle verification callback
+    - Handle error states
+    - _Requirements: 8.1, 8.2_
+  
+  - [x] 10.2 Add CAPTCHA to registration flow
+    - Integrate CaptchaField into registration form
+    - Validate CAPTCHA token before registration
+    - Show error if CAPTCHA fails
+    - _Requirements: 8.1, 8.2_
+  
+  - [x] 10.3 Implement rate limiting middleware
+    - Apply rate limiting to registration (3/hour per IP)
+    - Apply rate limiting to comments (5/hour per user)
+    - Apply rate limiting to ratings (20/hour per user)
+    - Apply rate limiting to profile updates (10/hour per user)
+    - _Requirements: 8.3_
+  
+  - [x] 10.4 Implement rate limit error handling
+    - Show "Слишком много действий. Попробуйте позже." message
+    - Display remaining time until unblock
+    - Log suspicious activity
+    - _Requirements: 8.4, 8.5, 8.7_
 
-- [ ] 7. Система комментариев
-  - CommentSection (список с пагинацией)
-  - CommentForm (textarea, валидация 10-1000 символов)
-  - CommentItem (username, avatar, кнопка удаления)
-  - Интегрировать в AnimeDetail страницу
-  - _Requirements: 5.*, 6.*_
+- [-] 11. Performance optimizations
+  - [x] 11.1 Implement caching strategy
+    - Set admin stats cache to 5 minutes
+    - Set comments cache to 2 minutes
+    - Set ratings cache to 5 minutes
+    - Set user profile cache to 10 minutes
+    - Set moderators list cache to 10 minutes
+    - _Requirements: 12.1, 12.5_
+  
+  - [x] 11.2 Implement pagination for comments
+    - Load 20 comments per page
+    - Add "Load more" or pagination controls
+    - _Requirements: 12.2_
+  
+  - [x] 11.3 Implement virtualization for admin panel lists
+    - Use react-window or similar for long lists
+    - Apply to top anime lists
+    - _Requirements: 12.3_
+  
+  - [x] 11.4 Implement debounce for search inputs
+    - Add 300ms debounce to moderator search
+    - _Requirements: 12.6_
+  
+  - [x] 11.5 Implement optimistic updates
+    - Add optimistic updates for ratings
+    - Add optimistic updates for comments
+    - Add optimistic updates for watch status changes
+    - _Requirements: 12.7_
 
-- [ ] 8. Система рейтингов
-  - RatingDisplay (средний рейтинг, количество оценок)
-  - RatingInput (10 звезд, hover эффект)
-  - RatingStats (гистограмма с recharts)
-  - Интегрировать в AnimeDetail и AnimeCard
-  - Заменить Shikimori рейтинг на собственный
-  - _Requirements: 7.*_
+- [x] 12. Checkpoint - Core functionality complete
+  - Ensure all database tables are created and working
+  - Verify all services are implemented and tested
+  - Confirm all React Query hooks are functioning
+  - Test rate limiting and CAPTCHA integration
+  - Ensure all UI components render correctly
 
-### Phase 5: Admin & Moderation
+- [x] 12.1 Fix admin panel redirect issue
+  - Update AdminPanel component to properly wait for admin status loading
+  - Ensure isAdminLoading is checked before redirecting
+  - Fix Header component to only show admin link after loading completes
+  - Test that admin panel stays open and doesn't redirect to home
+  - _Bug: Admin panel opens for 1 second then redirects to home_
 
-- [ ] 9. Админ-панель
-  - AdminPanel страница (проверка is_admin через RLS)
-  - StatisticsCard компоненты (все метрики)
-  - UserActivityChart (график за 30 дней)
-  - TopAnimeList и TopRatedList (с байесовским средним)
-  - ModeratorManager (список, добавление, удаление)
-  - Добавить ссылку в Header (только для is_admin = true)
-  - _Requirements: 3.*, 4.*_
+- [x] 12.2 Fix page scrolling on anime detail and favorites pages
+  - Add padding-bottom (pb-16) to AnimeDetail page container
+  - Add padding-bottom (pb-16) to Favorites page container
+  - Add padding-bottom (pb-16) to Home page container
+  - Ensure all page content is scrollable to the bottom
+  - Test that comment section and status tabs are fully accessible
+  - _Bug: Cannot scroll to bottom of pages, content is cut off_
 
-- [ ] 10. Модерация
-  - ModerationPanel страница (список комментариев)
-  - Обновить CommentItem для модераторов (кнопка удаления всех)
-  - Добавить ссылку в Header (для модераторов и админа)
-  - _Requirements: 6.*_
+- [x] 12.3 Fix favorites status tabs horizontal scrolling
+  - Add horizontal scroll container with proper overflow handling
+  - Add padding-right (pr-4) to tabs container for full scroll
+  - Add visible scrollbar styling with scrollbar-thin class
+  - Ensure all status tabs (Все, Смотрю, Планирую, Завершено, Брошено, Отложено) are accessible
+  - Test on mobile and desktop that tabs scroll smoothly
+  - _Bug: Status tabs don't scroll, "Отложено" tab is not visible_
 
-### Phase 6: Enhanced Features
+- [x] 12.4 Fix comments deletion 403 error
+  - Execute RESET_COMMENTS_POLICIES.sql in Supabase to reset RLS policies
+  - Verify policies allow users to delete their own comments
+  - Verify policies allow admins/moderators to delete any comment
+  - Clear browser cache after policy update
+  - Test comment deletion works without 403 errors
+  - _Bug: 403 error when trying to delete comments_
 
-- [ ] 11. Расширенное избранное
-  - Обновить FavoriteButton (dropdown с выбором статуса)
-  - Обновить Favorites страницу (вкладки для каждого статуса)
-  - FavoriteStatusTabs (5 вкладок с иконками и счетчиками)
-  - Обновить useFavorites хук (фильтрация по статусу)
-  - _Requirements: 9.*_
+- [x] 12.5 Fix ratings 406 error
+  - Check ratings table RLS policies in Supabase
+  - Ensure SELECT policy allows authenticated users to read ratings
+  - Ensure INSERT/UPDATE policies allow users to rate anime
+  - Verify ratings.service.ts uses correct query format
+  - Test that ratings load and save without 406 errors
+  - _Bug: 406 error when loading user ratings_
 
-- [ ] 12. Защита от ботов
-  - Интегрировать CAPTCHA в RegisterForm
-  - Интегрировать rate limiting во все действия (комментарии, оценки, профиль)
-  - Реализовать систему блокировки на 24 часа
-  - Отображение понятных сообщений об ошибках
-  - _Requirements: 8.*_
+- [x] 12.6 Fix rate limiting excessive blocking
+  - Review rate limit settings in rateLimit.service.ts
+  - Adjust comment rate limit from 5/hour to more reasonable limit
+  - Adjust rating rate limit from 20/hour to more reasonable limit
+  - Clear rate_limits table for testing: DELETE FROM rate_limits;
+  - Test that rate limiting doesn't block normal usage
+  - _Bug: Rate limiting blocks after 1 action with "1440 minutes" message_
 
-- [ ] 13. Пагинация
-  - Обновить Home страницу (состояние страницы, Pagination компонент)
-  - Обновить usePopularAnime хук (параметр page, кэширование)
-  - Skeleton screens при смене страницы
-  - _Requirements: 1.*_
+- [x] 12.7 Create SQL script to reset all RLS policies
+  - Create comprehensive SQL script to reset comments policies
+  - Create SQL script to reset ratings policies
+  - Create SQL script to verify all policies are correct
+  - Document steps to clear browser cache after policy changes
+  - _Support: Provide easy way to fix permission issues_
 
-### Phase 7: Polish & Deployment
+- [ ] 13. Integration and styling
+  - [ ] 13.1 Apply Modern Dark Cinema theme to all new components
+    - Use consistent color scheme (#ff0055 accent, dark backgrounds)
+    - Apply consistent spacing and typography
+    - Ensure responsive design for mobile
+    - _Requirements: All UI requirements_
+  
+  - [ ] 13.2 Add loading states and skeletons
+    - Add skeleton screens for comments loading
+    - Add spinners for avatar upload
+    - Add disabled states for buttons during submission
+    - _Requirements: 12.7_
+  
+  - [ ] 13.3 Implement error handling and notifications
+    - Add toast notifications for success/error
+    - Implement real-time form validation
+    - Show clear rate limiting error messages
+    - Add fallback UI for loading errors
+    - _Requirements: All requirements_
+  
+  - [ ] 13.4 Update routing
+    - Add /profile route
+    - Add /admin route with admin guard
+    - Add /moderation route with moderator guard
+    - _Requirements: 3.1, 3.2, 4.6_
 
-- [ ] 14. Оптимизация и UI/UX
-  - Настроить кэширование для всех хуков (staleTime, invalidation)
-  - Добавить toast notifications (react-hot-toast)
-  - Добавить loading states и анимации
-  - Проверить адаптивность всех компонентов
-  - Добавить empty states
-  - _Requirements: 12.*_
+- [ ] 14. Environment configuration
+  - [ ] 14.1 Add new environment variables
+    - Add VITE_HCAPTCHA_SITE_KEY
+    - Add VITE_ADMIN_EMAIL (lifeshindo96@gmail.com)
+    - Document in .env.example
+    - _Requirements: 8.1_
+  
+  - [ ] 14.2 Install new dependencies
+    - Install @hcaptcha/react-hcaptcha
+    - Install recharts for admin charts
+    - Install react-dropzone for avatar upload
+    - Update package.json
 
-- [ ] 15. Документация и deployment
-  - Обновить README.md (новые функции, скриншоты)
-  - Создать ADMIN_GUIDE.md и MODERATOR_GUIDE.md
-  - Создать SQL миграции (один файл)
-  - Настроить environment variables (.env.example)
-  - Применить миграции в Supabase
-  - Настроить hCaptcha (получить site key)
-  - Обновить Vercel environment variables
-  - Deploy и тестирование
-  - _Requirements: All_
+- [ ] 15. Testing
+  - [ ]* 15.1 Write unit tests for services
+    - Test CommentsService methods
+    - Test RatingsService methods including Bayesian calculation
+    - Test AdminService statistics methods
+    - Test RateLimitService logic
+    - Test StorageService validation
+    - _Requirements: All service requirements_
+  
+  - [ ]* 15.2 Write unit tests for components
+    - Test Pagination component
+    - Test ProfileEditor component
+    - Test CommentSection component
+    - Test RatingInput component
+    - Test AdminPanel component
+    - Test WatchStatusSelector component
+    - _Requirements: All UI requirements_
+  
+  - [ ]* 15.3 Write integration tests
+    - Test complete comment flow (add, view, delete)
+    - Test complete rating flow (rate, update, view)
+    - Test admin panel access and statistics
+    - Test moderator management flow
+    - Test profile update flow with avatar upload
+    - Test watch status management flow
+    - _Requirements: All requirements_
+  
+  - [ ]* 15.4 Test rate limiting
+    - Test comment rate limiting (5/hour)
+    - Test rating rate limiting (20/hour)
+    - Test registration rate limiting (3/hour)
+    - Test blocking after limit exceeded
+    - _Requirements: 8.3, 8.5_
+  
+  - [ ]* 15.5 Test security and permissions
+    - Test admin-only access to admin panel
+    - Test moderator-only access to moderation panel
+    - Test RLS policies for all tables
+    - Test avatar upload permissions
+    - _Requirements: 3.2, 3.6, 3.7, 4.6, 11.7_
 
-- [ ] 16. Финальное тестирование
-  - Протестировать все функции (пагинация, профили, комментарии, рейтинги)
-  - Протестировать админ-панель и модерацию
-  - Протестировать защиту (CAPTCHA, rate limiting, блокировка)
-  - Протестировать избранное с категориями
-  - Настроить мониторинг (Vercel Analytics, Supabase logs)
-  - _Requirements: All_
+- [ ] 16. Final checkpoint - Complete system test
+  - Verify all features work end-to-end
+  - Test on multiple devices and browsers
+  - Verify performance meets requirements
+  - Ensure all rate limits are working
+  - Confirm admin and moderator roles function correctly
+  - Test CAPTCHA integration
+  - Verify all database migrations are applied
 
 ## Notes
 
-- Все задачи выполняются последовательно
-- Modern Dark Cinema дизайн для всех компонентов
-- Все функции адаптивные
-- **Админ-панель защищена через is_admin в БД + RLS** (не через email на фронте!)
-- **Аватары используют user_id как имя файла** (upsert: true, без timestamp)
-- **Рейтинги: простое среднее для карточек, байесовское для топов**
-- CAPTCHA обязательна при регистрации
-- Rate limiting для всех критических действий
-
-## Estimated Timeline
-
-- **Phase 1**: 1 день (Database)
-- **Phase 2-3**: 2 дня (Services & Hooks)
-- **Phase 4**: 3-4 дня (UI Components)
-- **Phase 5**: 2 дня (Admin & Moderation)
-- **Phase 6**: 2 дня (Enhanced Features)
-- **Phase 7**: 2 дня (Polish & Deployment)
-
-**Total**: ~12-14 дней разработки (вместо 20-25)
-
-## Priority Order
-
-1. **Critical**: Database, Services, Hooks (Phase 1-3)
-2. **High**: Comments, Ratings, Pagination (Phase 4, 6)
-3. **Medium**: Profiles, Admin Panel, Favorites (Phase 4-5, 6)
-4. **Important**: Security, Moderation (Phase 5-6)
-5. **Polish**: Optimization, Testing, UI/UX (Phase 7)
-
+- Tasks marked with `*` are optional and can be skipped for faster MVP
+- Each task references specific requirements for traceability
+- Checkpoints ensure incremental validation
+- All new features follow existing Modern Dark Cinema design system
+- TypeScript is used throughout for type safety
+- React Query handles all data fetching and caching
+- Supabase provides backend (database, auth, storage)
+- Rate limiting protects against abuse
+- Admin email (lifeshindo96@gmail.com) is hardcoded as per requirements

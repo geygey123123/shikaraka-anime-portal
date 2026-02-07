@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Anime } from '../../types/anime';
 import { shikimoriService } from '../../services/shikimori';
+import { RatingDisplay } from '../rating/RatingDisplay';
+import { useAnimeRating } from '../../hooks/useRatings';
 
 interface AnimeCardProps {
   anime: Anime;
@@ -11,6 +13,9 @@ interface AnimeCardProps {
 const AnimeCardComponent: React.FC<AnimeCardProps> = ({ anime, onClick }) => {
   const queryClient = useQueryClient();
   const [imageError, setImageError] = useState(false);
+  
+  // Fetch internal rating - use simple average for cards
+  const { data: ratingData } = useAnimeRating(anime.id);
   
   // Добавляем базовый URL для изображений Shikimori
   const getImageUrl = (url: string) => {
@@ -80,12 +85,13 @@ const AnimeCardComponent: React.FC<AnimeCardProps> = ({ anime, onClick }) => {
           </h3>
           
           <div className="flex items-center gap-3 text-xs">
-            {/* Rating */}
-            {anime.score && (
-              <div className="flex items-center gap-1">
-                <span className="text-[#ff0055]">★</span>
-                <span className="text-gray-300">{anime.score}</span>
-              </div>
+            {/* Internal Rating - Use simple average for cards */}
+            {ratingData && ratingData.count > 0 && (
+              <RatingDisplay
+                rating={ratingData.average}
+                count={ratingData.count}
+                variant="card"
+              />
             )}
             
             {/* Year */}

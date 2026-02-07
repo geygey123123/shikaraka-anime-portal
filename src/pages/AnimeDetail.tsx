@@ -5,6 +5,11 @@ import { useAnimeDetails } from '../hooks/useAnime';
 import VideoPlayer from '../components/anime/VideoPlayer';
 import { ErrorMessage } from '../components/ui/ErrorMessage';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
+import { CommentSection } from '../components/comments/CommentSection';
+import { RatingDisplay, RatingInput, RatingStats } from '../components/rating';
+import { useAuth } from '../hooks/useAuth';
+import { useAnimeRating, useUserRating, useSetRating } from '../hooks/useRatings';
+import { parseRateLimitError, logSuspiciousActivity } from '../utils/rateLimit';
 
 export const AnimeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,8 +17,38 @@ export const AnimeDetail: React.FC = () => {
   const animeId = parseInt(id || '0', 10);
   const [imageError, setImageError] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>('');
+  const { user, isAuthenticated } = useAuth();
   
   const { data: anime, isLoading, error, refetch } = useAnimeDetails(animeId);
+  
+  // Fetch rating data
+  const { data: ratingData, isLoading: isRatingLoading } = useAnimeRating(animeId);
+  const { data: userRating } = useUserRating(animeId);
+  const setRatingMutation = useSetRating();
+
+  // Handle rating submission
+  const handleRate = async (rating: number) => {
+    try {
+      await setRatingMutation.mutateAsync({ animeId, rating });
+    } catch (error: any) {
+      // Parse and handle rate limiting errors
+      const parsed = parseRateLimitError(error.message || '');
+      
+      if (parsed.isRateLimit) {
+        // Log suspicious activity
+        logSuspiciousActivity(user?.id || null, 'rating', {
+          animeId,
+          rating,
+          remainingMinutes: parsed.remainingMinutes,
+        });
+        
+        // Show user-friendly error message
+        alert(parsed.message);
+      } else {
+        alert('Не удалось сохранить оценку. Попробуйте еще раз.');
+      }
+    }
+  };
 
   // Добавляем базовый URL для изображений Shikimori
   const getImageUrl = (url: string) => {
@@ -77,7 +112,7 @@ export const AnimeDetail: React.FC = () => {
   const year = anime.aired_on ? new Date(anime.aired_on).getFullYear() : 'N/A';
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-white">
+    <div className="min-h-screen bg-[#0a0a0c] text-white pb-24">{/* Increased padding */}
       {/* Back Button */}
       <div className="px-4 sm:px-6 lg:px-8 pt-6">
         <button
@@ -124,10 +159,12 @@ export const AnimeDetail: React.FC = () => {
                 
                 {/* Stats */}
                 <div className="flex flex-wrap gap-4 text-sm">
-                  {anime.score && (
+                  {/* Internal Rating - Use Bayesian weighted rating for detail page */}
+                  {!isRatingLoading && ratingData && ratingData.count > 0 && (
                     <div className="flex items-center gap-2">
                       <Star className="text-[#ff0055]" size={18} />
-                      <span className="text-gray-300">{anime.score}</span>
+                      <span className="text-gray-300">{ratingData.weighted.toFixed(1)}</span>
+                      <span className="text-gray-500 text-xs">({ratingData.count})</span>
                     </div>
                   )}
                   
@@ -144,6 +181,56 @@ export const AnimeDetail: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <TrendingUp className="text-gray-500" size={18} />
                     <span className="text-gray-300">{anime.status}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rating Section */}
+              <div className="bg-gray-900 rounded-lg p-6">
+                <h2 className="text-2xl font-bold mb-4">Рейтинг</h2>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left: Rating Display and Input */}
+                  <div className="space-y-6">
+                    {/* Display current rating */}
+                    {!isRatingLoading && ratingData && (
+                      <RatingDisplay
+                        rating={ratingData.weighted}
+                        count={ratingData.count}
+                        variant="detail"
+                      />
+                    )}
+
+                    {/* Rating input for authenticated users */}
+                    {isAuthenticated ? (
+                      <div className="pt-4 border-t border-gray-800">
+                        <RatingInput
+                          animeId={animeId}
+                          currentRating={userRating}
+                          onRate={handleRate}
+                          disabled={setRatingMutation.isPending}
+                        />
+                        {setRatingMutation.isPending && (
+                          <p className="text-sm text-gray-400 mt-2">Сохранение...</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="pt-4 border-t border-gray-800">
+                        <p className="text-gray-400 text-sm">
+                          Войдите, чтобы оценить это аниме
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Rating Stats */}
+                  <div>
+                    {!isRatingLoading && ratingData && (
+                      <RatingStats
+                        average={ratingData.average}
+                        count={ratingData.count}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -221,6 +308,13 @@ export const AnimeDetail: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* Comment Section */}
+              <CommentSection
+                animeId={anime.id}
+                isAuthenticated={isAuthenticated}
+                currentUserId={user?.id}
+              />
             </div>
           </div>
         </div>

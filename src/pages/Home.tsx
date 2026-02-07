@@ -1,18 +1,28 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePopularAnime, useSearchAnime } from '../hooks/useAnime';
+import { usePagination } from '../hooks/usePagination';
 import { AnimeGrid } from '../components/anime/AnimeGrid';
+import { Pagination } from '../components/pagination/Pagination';
 import { Header } from '../components/layout/Header';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const { currentPage, goToPage, resetPage } = usePagination(1);
   
-  // Fetch popular anime
-  const { data: popularAnimes, isLoading: isLoadingPopular, error: popularError, refetch: refetchPopular } = usePopularAnime();
+  // Fetch popular anime with pagination
+  const { data: popularAnimes, isLoading: isLoadingPopular, error: popularError, refetch: refetchPopular } = usePopularAnime(currentPage);
   
   // Fetch search results (only when query is not empty)
   const { data: searchResults, isLoading: isLoadingSearch, error: searchError, refetch: refetchSearch } = useSearchAnime(searchQuery);
+
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    if (searchQuery.length > 0) {
+      resetPage();
+    }
+  }, [searchQuery, resetPage]);
 
   // Memoize computed values to prevent unnecessary recalculations
   const isSearching = useMemo(() => searchQuery.length > 0, [searchQuery]);
@@ -20,6 +30,9 @@ export const Home: React.FC = () => {
   const isLoading = useMemo(() => isSearching ? isLoadingSearch : isLoadingPopular, [isSearching, isLoadingSearch, isLoadingPopular]);
   const error = useMemo(() => isSearching ? searchError : popularError, [isSearching, searchError, popularError]);
   const refetch = useMemo(() => isSearching ? refetchSearch : refetchPopular, [isSearching, refetchSearch, refetchPopular]);
+
+  // Calculate total pages (Shikimori API typically has many pages, we'll set a reasonable limit)
+  const totalPages = 50; // Reasonable limit for popular anime pagination
 
   // Memoize callbacks to prevent recreation on every render
   const handleAnimeClick = useCallback((id: number) => {
@@ -34,8 +47,12 @@ export const Home: React.FC = () => {
     refetch();
   }, [refetch]);
 
+  const handlePageChange = useCallback((page: number) => {
+    goToPage(page);
+  }, [goToPage]);
+
   return (
-    <div className="min-h-screen bg-[#0a0a0c]">
+    <div className="min-h-screen bg-[#0a0a0c] pb-24">{/* Increased padding */}
       <Header onSearch={handleSearch} />
       
       {/* Hero Section */}
@@ -67,6 +84,16 @@ export const Home: React.FC = () => {
             onAnimeClick={handleAnimeClick}
             onRetry={handleRetry}
           />
+
+          {/* Pagination - only show for popular anime (not for search) */}
+          {!isSearching && !error && animes && animes.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              isLoading={isLoading}
+            />
+          )}
         </div>
       </section>
     </div>

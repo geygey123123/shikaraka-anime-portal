@@ -11,7 +11,7 @@ ShiKaraKa uses Supabase for:
 
 ## 🗄️ Database Schema
 
-### Tables
+### V1 Tables (Core Features)
 
 1. **profiles** - Extended user profile information
    - Automatically created when a user signs up
@@ -22,6 +22,30 @@ ShiKaraKa uses Supabase for:
    - Links users to their favorite anime via shikimori_id
    - Unique constraint prevents duplicates
    - Optimized with indexes for fast queries
+
+### V2 Tables (Advanced Features)
+
+3. **moderators** - Moderator management
+   - Tracks users with moderation privileges
+   - Admin-controlled access
+
+4. **comments** - User comments on anime
+   - Supports moderation and deletion
+   - Rate-limited to prevent spam
+
+5. **ratings** - User ratings for anime
+   - 1-10 star rating system
+   - Bayesian weighted averages
+
+6. **rate_limits** - Rate limiting and abuse prevention
+   - Tracks user actions per time window
+   - Automatic blocking for excessive activity
+
+### V2 Storage
+
+7. **avatars bucket** - User avatar images
+   - Public access with 2MB size limit
+   - Supports JPG, PNG, WebP formats
 
 ## 🚀 Setup Instructions
 
@@ -41,6 +65,8 @@ ShiKaraKa uses Supabase for:
 ### 2. Run Migrations
 
 Execute the SQL files **in order** in the Supabase SQL Editor:
+
+#### V1 Migrations (Core Features)
 
 #### Step 2.1: Open SQL Editor
 
@@ -73,12 +99,32 @@ Click **"Run"**
 
 ✅ You should see: "Success. No rows returned"
 
+#### V2 Migrations (Advanced Features)
+
+> 📝 **Note**: V2 migrations add advanced features like comments, ratings, moderation, and admin panel. See [V2_MIGRATION_GUIDE.md](./migrations/V2_MIGRATION_GUIDE.md) for detailed instructions.
+
+To apply V2 migrations, run these files in order:
+
+1. **003_create_v2_tables.sql** - Creates moderators, comments, ratings, rate_limits tables
+2. **004_update_existing_tables.sql** - Adds watch_status to favorites, admin fields to profiles
+3. **005_create_admin_trigger.sql** - Auto-sets admin flag for lifeshindo96@gmail.com
+4. **006_create_indexes.sql** - Performance indexes for all V2 tables
+5. **007_create_avatars_bucket.sql** - Storage bucket for user avatars
+
+**Quick Apply**: Copy and run each file's contents in SQL Editor, or see the [V2 Migration Guide](./migrations/V2_MIGRATION_GUIDE.md) for alternative methods.
+
+**Verification**: Run `VERIFY_V2_SETUP.sql` to check all V2 migrations were applied correctly.
+
 #### Step 2.4: Verify Tables
 
 1. Go to **"Table Editor"** in the left sidebar
-2. You should see two tables:
+2. You should see all tables:
    - ✅ `profiles`
    - ✅ `favorites`
+   - ✅ `moderators` (V2)
+   - ✅ `comments` (V2)
+   - ✅ `ratings` (V2)
+   - ✅ `rate_limits` (V2)
 3. Click each table to inspect its structure
 
 ### 3. Configure Authentication

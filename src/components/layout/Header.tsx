@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, User, LogOut, Heart } from 'lucide-react';
+import { Search, Menu, X, User, LogOut, Heart, Shield } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthModal } from '../../contexts/AuthModalContext';
+import { useIsAdmin } from '../../hooks/useAdmin';
 import { Button } from '../ui/Button';
 
 interface HeaderProps {
@@ -12,6 +13,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const { openAuthModal } = useAuthModal();
+  const { isAdmin, isLoading: isAdminLoading } = useIsAdmin();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -84,6 +86,15 @@ export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
                   </Button>
                 </Link>
                 
+                {!isAdminLoading && isAdmin && (
+                  <Link to="/admin">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                      <Shield size={18} />
+                      <span>Админ-панель</span>
+                    </Button>
+                  </Link>
+                )}
+                
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -95,6 +106,14 @@ export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
 
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-lg py-2">
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:bg-gray-800 flex items-center gap-2 min-h-[44px]"
+                      >
+                        <User size={16} />
+                        <span>Профиль</span>
+                      </Link>
                       <button
                         onClick={handleLogout}
                         className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:bg-gray-800 flex items-center gap-2 min-h-[44px]"
@@ -159,6 +178,26 @@ export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
                 >
                   <Heart size={18} />
                   <span>Избранное</span>
+                </Link>
+                
+                {!isAdminLoading && isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors min-h-[44px]"
+                  >
+                    <Shield size={18} />
+                    <span>Админ-панель</span>
+                  </Link>
+                )}
+                
+                <Link
+                  to="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors min-h-[44px]"
+                >
+                  <User size={18} />
+                  <span>Профиль</span>
                 </Link>
                 
                 <div className="px-4 py-2 text-sm text-gray-400">
