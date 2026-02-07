@@ -178,7 +178,7 @@ class AdminService {
     try {
       const { data, error } = await supabase
         .from('favorites')
-        .select('anime_id, anime_name');
+        .select('anime_id');
 
       if (error) {
         console.error('Error getting top anime:', error);
@@ -194,7 +194,7 @@ class AdminService {
         } else {
           acc.push({
             anime_id: item.anime_id,
-            anime_name: item.anime_name || 'Unknown',
+            anime_name: `Anime #${item.anime_id}`, // Placeholder name
             count: 1,
           });
         }
