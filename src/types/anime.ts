@@ -85,3 +85,31 @@ export interface Favorite {
   watch_status?: string;
   status_updated_at?: string;
 }
+
+// Search and grouping types
+
+export type RelationType = 'sequel' | 'prequel' | 'side_story' | 'alternative' | 'summary' | 'parent_story' | 'spin_off';
+
+export interface RelatedAnime {
+  id: number;
+  relation: RelationType;
+  relation_russian: string;
+  anime: Anime;
+}
+
+export interface GroupedAnime {
+  main: Anime;
+  related: RelatedAnime[];
+  isExpanded: boolean;
+  isRoot: boolean;
+}
+
+export interface SearchFilters {
+  genres?: string[];
+  year?: {
+    from?: number;
+    to?: number;
+  };
+  kind?: string[];
+  status?: string[];
+}

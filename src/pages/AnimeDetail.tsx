@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Film, Star, TrendingUp } from 'lucide-react';
 import { useAnimeDetails } from '../hooks/useAnime';
-import VideoPlayer from '../components/anime/VideoPlayer';
+import { KodikPlayerWrapper } from '../components/anime/KodikPlayerWrapper';
+import { VoiceStatsTooltip } from '../components/anime/VoiceStatsTooltip';
 import { ErrorMessage } from '../components/ui/ErrorMessage';
 import { FavoriteButton } from '../components/favorites/FavoriteButton';
 import { CommentSection } from '../components/comments/CommentSection';
@@ -237,8 +238,15 @@ export const AnimeDetail: React.FC = () => {
 
               {/* Video Player */}
               <div>
-                <h2 className="text-2xl font-bold mb-4">Смотреть онлайн</h2>
-                <VideoPlayer shikimoriId={anime.id} animeName={displayName} />
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold">Смотреть онлайн</h2>
+                  <VoiceStatsTooltip animeId={anime.id} position="bottom" />
+                </div>
+                <KodikPlayerWrapper 
+                  animeId={anime.id}
+                  shikimoriId={anime.id} 
+                  animeName={displayName}
+                />
               </div>
 
               {/* Genres */}
