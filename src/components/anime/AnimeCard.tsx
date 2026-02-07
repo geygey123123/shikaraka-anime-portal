@@ -25,11 +25,6 @@ const AnimeCardComponent: React.FC<AnimeCardProps> = ({ anime, onClick, watchSta
   const queryClient = useQueryClient();
   const [imageError, setImageError] = useState(false);
   
-  // DEBUG: Log watchStatus
-  if (watchStatus) {
-    console.log('AnimeCard - watchStatus:', watchStatus, 'for anime:', anime.name);
-  }
-  
   // Fetch internal rating - use simple average for cards
   const { data: ratingData } = useAnimeRating(anime.id);
   

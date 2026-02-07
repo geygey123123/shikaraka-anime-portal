@@ -1,36 +1,39 @@
 @echo off
 echo ========================================
-echo Git Push to GitHub
+echo ShiKaraKa - Build and Deploy
 echo ========================================
 echo.
 
-REM Configure Git user
-echo [1/4] Configuring Git user...
+echo [1/5] Building project...
+call npm run build
+if %errorlevel% neq 0 (
+    echo ERROR: Build failed!
+    pause
+    exit /b %errorlevel%
+)
+echo Build successful!
+echo.
+
+echo [2/5] Configuring Git user...
 git config user.email "geygey123123@github.com"
 git config user.name "geygey123123"
-echo Git user configured!
 echo.
 
-REM Add all files
-echo [2/4] Adding all files...
+echo [3/5] Adding files to git...
 git add .
-echo Files added!
 echo.
 
-REM Create commit
-echo [3/4] Creating commit...
-git commit -m "Fix: Update padding and admin panel logic"
-echo Commit created!
+echo [4/5] Committing changes...
+git commit -m "fix: admin panel access, back button, status badges"
 echo.
 
-REM Push to GitHub
-echo [4/4] Pushing to GitHub...
+echo [5/5] Pushing to GitHub...
 git push origin main
 echo.
 
 if %ERRORLEVEL% EQU 0 (
     echo ========================================
-    echo SUCCESS! Changes pushed to GitHub
+    echo SUCCESS! Deployed to Vercel
     echo ========================================
     echo.
     echo Vercel will auto-deploy in 1-2 minutes
@@ -39,8 +42,6 @@ if %ERRORLEVEL% EQU 0 (
     echo ========================================
     echo ERROR: Push failed
     echo ========================================
-    echo.
-    echo Try: git push
 )
 echo.
 pause

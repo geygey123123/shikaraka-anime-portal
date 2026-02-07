@@ -12,15 +12,6 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-/**
- * ProtectedRoute - Route guard component
- * Protects routes based on authentication and authorization requirements
- * 
- * @param requireAuth - Requires user to be authenticated
- * @param requireAdmin - Requires user to be an admin
- * @param requireModerator - Requires user to be a moderator or admin
- * @param redirectTo - Path to redirect to if access is denied (default: '/')
- */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireAuth = false,
@@ -32,56 +23,34 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAdmin, isLoading: adminLoading } = useIsAdmin();
   const isModerator = useIsModerator();
 
-  // DEBUG LOGGING
-  console.log('ProtectedRoute Debug:', {
-    requireAdmin,
-    requireModerator,
-    authLoading,
-    adminLoading,
-    isAdmin,
-    isModerator,
-    user: user?.email,
-  });
+  console.log('🔒 ProtectedRoute:', { authLoading, adminLoading, isAdmin, isModerator, user: user?.email });
 
-  // Wait for authentication to complete first
+  // Wait for auth
   if (authLoading) {
-    console.log('ProtectedRoute: Waiting for auth...');
     return <LoadingScreen />;
   }
 
-  // Check authentication requirement
+  // Check auth
   if (requireAuth && !user) {
-    console.log('ProtectedRoute: No user, redirecting to', redirectTo);
     return <Navigate to={redirectTo} replace />;
   }
 
-  // Wait for admin/moderator status to load before any checks
-  if ((requireAdmin || requireModerator) && adminLoading) {
-    console.log('ProtectedRoute: Waiting for admin status...');
+  // Wait for admin check ONLY if we need it
+  if (requireAdmin && adminLoading) {
     return <LoadingScreen />;
   }
 
-  // Check admin requirement - SIMPLE: if isAdmin is true, LET THEM IN
-  if (requireAdmin) {
-    console.log('ProtectedRoute: Admin check - isAdmin:', isAdmin);
-    if (!isAdmin) {
-      console.log('ProtectedRoute: Not admin, redirecting to', redirectTo);
-      return <Navigate to={redirectTo} replace />;
-    }
-    console.log('ProtectedRoute: Admin access GRANTED');
+  // Simple check: if isAdmin is true, LET THEM IN
+  if (requireAdmin && !isAdmin) {
+    console.log('❌ Admin required but isAdmin =', isAdmin);
+    return <Navigate to={redirectTo} replace />;
   }
 
-  // Check moderator requirement (admin also counts as moderator)
-  if (requireModerator) {
-    console.log('ProtectedRoute: Moderator check - isAdmin:', isAdmin, 'isModerator:', isModerator);
-    if (!isAdmin && !isModerator) {
-      console.log('ProtectedRoute: Not moderator, redirecting to', redirectTo);
-      return <Navigate to={redirectTo} replace />;
-    }
-    console.log('ProtectedRoute: Moderator access GRANTED');
+  // Moderator check
+  if (requireModerator && !isAdmin && !isModerator) {
+    return <Navigate to={redirectTo} replace />;
   }
 
-  // All checks passed, render children
-  console.log('ProtectedRoute: All checks passed, rendering children');
+  console.log('✅ Access granted');
   return <>{children}</>;
 };

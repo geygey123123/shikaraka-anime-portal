@@ -16,18 +16,11 @@ interface Profile {
   last_active: string | null;
 }
 
-/**
- * Hook для получения профиля пользователя
- * @param userId - ID пользователя
- * @returns React Query результат с профилем пользователя
- */
 export const useProfile = (userId?: string) => {
   return useQuery<Profile | null, Error>({
     queryKey: ['profile', userId],
     queryFn: async () => {
-      if (!userId) {
-        return null;
-      }
+      if (!userId) return null;
 
       const { data, error } = await supabase
         .from('profiles')
@@ -35,32 +28,36 @@ export const useProfile = (userId?: string) => {
         .eq('id', userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      console.log('📋 Profile loaded:', data?.is_admin ? '✅ ADMIN' : '❌ NOT ADMIN');
       return data as Profile | null;
     },
-    staleTime: 10 * 60 * 1000, // 10 минут
-    gcTime: 15 * 60 * 1000, // 15 минут
-    enabled: !!userId, // Запрос выполняется только если userId предоставлен
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    enabled: !!userId,
+    retry: 2,
   });
 };
 
-/**
- * Hook для проверки, является ли текущий пользователь администратором
- * @returns Object with isAdmin status and loading state
- */
 export const useIsAdmin = (): { isAdmin: boolean; isLoading: boolean } => {
-  const { user } = useAuth();
-  const { data: profile, isLoading } = useProfile(user?.id);
+  const { user, loading: authLoading } = useAuth();
+  const { data: profile, isLoading: profileLoading } = useProfile(user?.id);
 
-  // Debug logging for admin status
-  if (profile) {
-    console.log('Current profile:', profile);
-    console.log('is_admin status:', profile.is_admin);
+  console.log('👤 useIsAdmin:', { 
+    email: user?.email, 
+    authLoading, 
+    profileLoading, 
+    is_admin: profile?.is_admin 
+  });
+
+  if (authLoading || profileLoading) {
+    return { isAdmin: false, isLoading: true };
   }
 
   return {
     isAdmin: profile?.is_admin === true,
-    isLoading,
+    isLoading: false,
   };
 };
 
