@@ -1,82 +1,46 @@
 @echo off
 echo ========================================
-echo Full Repository Reset and Upload
+echo Git Push to GitHub
 echo ========================================
-echo.
-echo WARNING: This will DELETE all files on GitHub
-echo and upload fresh copy from local!
-echo.
-echo Press Ctrl+C to cancel, or
-pause
 echo.
 
 REM Configure Git user
-echo [1/7] Configuring Git user...
-git config --global user.email "geygey123123@github.com"
-git config --global user.name "geygey123123"
+echo [1/4] Configuring Git user...
+git config user.email "geygey123123@github.com"
+git config user.name "geygey123123"
 echo Git user configured!
 echo.
 
-REM Remove all tracked files from Git (but keep locally)
-echo [2/7] Removing all tracked files from Git...
-git rm -r --cached .
-echo Files removed from Git tracking!
-echo.
-
-REM Add all files fresh
-echo [3/7] Adding all files fresh...
+REM Add all files
+echo [2/4] Adding all files...
 git add .
 echo Files added!
 echo.
 
 REM Create commit
-echo [4/7] Creating commit...
-git commit -m "Full reset: ShiKaraKa Anime Portal with V2 Features Spec"
+echo [3/4] Creating commit...
+git commit -m "Fix: Update padding and admin panel logic"
 echo Commit created!
 echo.
 
-REM Force push to GitHub (overwrites everything)
-echo [5/7] Force pushing to GitHub...
-echo This will DELETE everything on GitHub and upload fresh!
-echo.
-git push -f origin main
+REM Push to GitHub
+echo [4/4] Pushing to GitHub...
+git push origin main
 echo.
 
 if %ERRORLEVEL% EQU 0 (
     echo ========================================
-    echo SUCCESS! Repository fully reset!
+    echo SUCCESS! Changes pushed to GitHub
     echo ========================================
     echo.
-    echo All old files deleted from GitHub
-    echo Fresh copy uploaded successfully
-    echo.
+    echo Vercel will auto-deploy in 1-2 minutes
     echo Check: https://github.com/geygey123123/shikaraka-anime-portal
-    echo.
-    echo Next: Check .kiro/specs/shikaraka-v2-features/ for new features
 ) else (
     echo ========================================
     echo ERROR: Push failed
     echo ========================================
     echo.
-    echo This might be because:
-    echo 1. You need to authenticate with GitHub
-    echo 2. The repository does not exist
-    echo 3. You do not have force push permissions
-    echo.
-    echo SOLUTION 1 - Use GitHub Desktop (recommended):
-    echo   1. Download: https://desktop.github.com/
-    echo   2. Login to your account
-    echo   3. Open this folder in GitHub Desktop
-    echo   4. Click Push origin
-    echo.
-    echo SOLUTION 2 - Create Personal Access Token:
-    echo   1. Open GITHUB_TOKEN_SETUP.md file
-    echo   2. Follow instructions to create token
-    echo   3. Run: git config --global credential.helper store
-    echo   4. Run this script again
-    echo   5. Enter username and token when prompted
-    echo.
-    echo Then run this script again!
+    echo Try: git push
 )
 echo.
 pause
